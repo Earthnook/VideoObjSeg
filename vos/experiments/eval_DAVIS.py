@@ -36,8 +36,23 @@ def get_arguments():
     parser.add_argument("-y", type=int, help="year", required=True)
     parser.add_argument("-viz", help="Save visualization", action="store_true")
     parser.add_argument("-D", type=str, help="path to data",default='/local/DATA')
-    parser.add_argument("-w", type=str, help="path to weight file", default="data/weightfiles/STM_weights.pth")
+    parser.add_argument("-w", type=str, help="path to weight file", default="./data/weightfiles/STM_weights.pth")
+    parser.add_argument("-o", type=str, help="path to save results", default="./data/STM_test/")
     return parser.parse_args()
+
+if False:
+    # configuration for remote attach and debug
+    import ptvsd
+    import sys
+    ip_address = ('0.0.0.0', 5050)
+    print("Process: " + " ".join(sys.argv[:]))
+    print("Is waiting for attach at address: %s:%d" % ip_address, flush= True)
+    # Allow other computers to attach to ptvsd at this IP address and port.
+    ptvsd.enable_attach(address=ip_address, redirect_output= True)
+    # Pause the program until a remote debugger is attached
+    ptvsd.wait_for_attach()
+    print("Process attached, start running into experiment...", flush= True)
+    ptvsd.break_into_debugger()
 
 args = get_arguments()
 
@@ -46,6 +61,8 @@ YEAR = args.y
 SET = args.s
 VIZ = args.viz
 DATA_ROOT = args.D
+OUTPUT_ROOT = args.o
+PTH_PATH = args.w
 
 # Model and version
 MODEL = 'STM'
@@ -107,9 +124,8 @@ if torch.cuda.is_available():
     model.cuda()
 model.eval() # turn-off BN
 
-pth_path = args.w
-print('Loading weights:', pth_path)
-model.load_state_dict(torch.load(pth_path))
+print('Loading weights:', PTH_PATH)
+model.load_state_dict(torch.load(PTH_PATH))
 
 code_name = '{}_DAVIS_{}{}'.format(MODEL,YEAR,SET)
 print('Start Testing:', code_name)
@@ -124,7 +140,7 @@ for seq, V in enumerate(Testloader):
     pred, Es = Run_video(Fs, Ms, num_frames, num_objects, Mem_every=5, Mem_number=None)
         
     # Save results for quantitative eval ######################
-    test_path = os.path.join('./test', code_name, seq_name)
+    test_path = os.path.join(OUTPUT_ROOT, code_name, seq_name)
     if not os.path.exists(test_path):
         os.makedirs(test_path)
     for f in range(num_frames):
@@ -135,7 +151,7 @@ for seq, V in enumerate(Testloader):
     if VIZ:
         from helpers import overlay_davis
         # visualize results #######################
-        viz_path = os.path.join('./viz/', code_name, seq_name)
+        viz_path = os.path.join(OUTPUT_ROOT, 'viz/', code_name, seq_name)
         if not os.path.exists(viz_path):
             os.makedirs(viz_path)
 
@@ -146,8 +162,8 @@ for seq, V in enumerate(Testloader):
             canvas = Image.fromarray(canvas)
             canvas.save(os.path.join(viz_path, 'f{}.jpg'.format(f)))
 
-        vid_path = os.path.join('./viz/', code_name, '{}.mp4'.format(seq_name))
-        frame_path = os.path.join('./viz/', code_name, seq_name, 'f%d.jpg')
+        vid_path = os.path.join(OUTPUT_ROOT, 'viz/', code_name, '{}.mp4'.format(seq_name))
+        frame_path = os.path.join(OUTPUT_ROOT, 'viz/', code_name, seq_name, 'f%d.jpg')
         os.system('ffmpeg -framerate 10 -i {} {} -vcodec libx264 -crf 10  -pix_fmt yuv420p  -nostats -loglevel 0 -y'.format(frame_path, vid_path))
 
 
