@@ -1,0 +1,17 @@
+name: vos
+channels:
+- pytorch
+dependencies:
+- python=3.7
+- pytorch=1.4
+- torchvision
+- cudatoolkit=10.
+- numpy
+- psutil
+- pip
+- pip:
+  # - opencv-python==4.2.0 # It is recommended to install manually
+  - graphviz
+  - tqdm
+  - ptvsd # vscode debug
+  # - git+git://github.com/ziwenzhuang/exptools@add_tensorboard # the tools to manage experiment

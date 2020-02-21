@@ -19,7 +19,7 @@ import argparse
 import copy
 import sys
 
-from helpers import *
+from vos.utils.helpers import *
  
 print('Space-time Memory Networks: initialized.')
  

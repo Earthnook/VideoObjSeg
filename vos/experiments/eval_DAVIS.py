@@ -23,8 +23,8 @@ import copy
 
 
 ### My libs
-from dataset import DAVIS_MO_Test
-from model import STM
+from vos.datasets.DAVIS import DAVIS_MO_Test
+from vos.models.STM import STM
 
 
 torch.set_grad_enabled(False) # Volatile
@@ -36,6 +36,7 @@ def get_arguments():
     parser.add_argument("-y", type=int, help="year", required=True)
     parser.add_argument("-viz", help="Save visualization", action="store_true")
     parser.add_argument("-D", type=str, help="path to data",default='/local/DATA')
+    parser.add_argument("-w", type=str, help="path to weight file", default="data/weightfiles/STM_weights.pth")
     return parser.parse_args()
 
 args = get_arguments()
@@ -106,7 +107,7 @@ if torch.cuda.is_available():
     model.cuda()
 model.eval() # turn-off BN
 
-pth_path = 'STM_weights.pth'
+pth_path = args.w
 print('Loading weights:', pth_path)
 model.load_state_dict(torch.load(pth_path))
 
