@@ -40,7 +40,7 @@ def get_arguments():
     parser.add_argument("-o", type=str, help="path to save results", default="./data/STM_test/")
     return parser.parse_args()
 
-debug = False
+debug = True
 if debug:
     # configuration for remote attach and debug
     import ptvsd
@@ -115,13 +115,13 @@ def Run_video(Fs, Ms, num_frames, num_objects, Mem_every=None, Mem_number=None):
         if t-1 in to_memorize:
             keys, values = this_keys, this_values
         
-    pred = np.argmax(Es[0].cpu().numpy(), axis=0).astype(np.uint8)
+    pred = np.argmax(Es[0].cpu().numpy(), axis=1).astype(np.uint8)
     return pred, Es
 
 
 
 Testset = DAVIS_MO_Test(DATA_ROOT, resolution='480p', imset='20{}/{}.txt'.format(YEAR,SET), single_object=(YEAR==16))
-Testloader = data.DataLoader(Testset, batch_size=1, shuffle=False, num_workers=2 if not debug else 0, pin_memory=True)
+Testloader = data.DataLoader(Testset, batch_size=2, shuffle=False, num_workers=2 if not debug else 0, pin_memory=True)
 
 model = nn.DataParallel(STM())
 if torch.cuda.is_available():

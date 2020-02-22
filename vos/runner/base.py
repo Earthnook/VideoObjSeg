@@ -45,6 +45,16 @@ class RunnerBase:
             new_v = getattr(train_info, k, [])
             v.extend(new_v if isinstance(new_v, list) else [new_v])
 
+    def store_eval_info(self, epoch_i, eval_info, extra_info):
+        """ store eval_info into attribute of self
+        @ Args:
+            eval_info: a namedtuple
+            extra_info: a dict
+        """
+        for k, v in self._eval_infos.items():
+            new_v = getattr(eval_info, k, [])
+            v.extend(new_v if isinstance(new_v, list) else [new_v])
+
     def get_epoch_snapshot(self, epoch_i):
         """ Collect all state needed for full checkpoint/snapshot of the training,
         including all model parameters and algorithm parameters
@@ -64,16 +74,6 @@ class RunnerBase:
         params = self.get_epoch_snapshot(epoch_i)
         logger.save_itr_params(epoch_i, params)
         logger.log("saved")
-
-    def store_eval_info(self, epoch_i, eval_info, extra_info):
-        """ store eval_info into attribute of self
-        @ Args:
-            eval_info: a namedtuple
-            extra_info: a dict
-        """
-        for k, v in self._eval_infos.items():
-            new_v = getattr(eval_info, k, [])
-            v.extend(new_v if isinstance(new_v, list) else [new_v])
 
     def log_diagnostic(self, epoch_i):
         """ write all informations into exact files using logging method
