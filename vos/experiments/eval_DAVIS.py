@@ -40,7 +40,7 @@ def get_arguments():
     parser.add_argument("-o", type=str, help="path to save results", default="./data/STM_test/")
     return parser.parse_args()
 
-debug = True
+debug = False
 if debug:
     # configuration for remote attach and debug
     import ptvsd
@@ -81,6 +81,9 @@ if VIZ:
 palette = Image.open(DATA_ROOT + '/Annotations/480p/blackswan/00000.png').getpalette()
 
 def Run_video(Fs, Ms, num_frames, num_objects, Mem_every=None, Mem_number=None):
+    """ input Fs, Ms are both size (1, t, n, H, W)
+    """
+
     # initialize storage tensors
     if Mem_every:
         to_memorize = [int(i) for i in np.arange(0, num_frames, step=Mem_every)]
@@ -90,12 +93,12 @@ def Run_video(Fs, Ms, num_frames, num_objects, Mem_every=None, Mem_number=None):
         raise NotImplementedError
 
     Es = torch.zeros_like(Ms)
-    Es[:,:,0] = Ms[:,:,0]
+    Es[:,0] = Ms[:,0]
 
     for t in tqdm.tqdm(range(1, num_frames)):
         # memorize
         with torch.no_grad():
-            prev_key, prev_value = model(Fs[:,:,t-1], Es[:,:,t-1], torch.tensor([num_objects])) 
+            prev_key, prev_value = model(Fs[:,t-1], Es[:,t-1], torch.tensor([num_objects])) 
 
         if t-1 == 0: # 
             this_keys, this_values = prev_key, prev_value # only prev memory
@@ -105,8 +108,8 @@ def Run_video(Fs, Ms, num_frames, num_objects, Mem_every=None, Mem_number=None):
         
         # segment
         with torch.no_grad():
-            logit = model(Fs[:,:,t], this_keys, this_values, torch.tensor([num_objects]))
-        Es[:,:,t] = F.softmax(logit, dim=1)
+            logit = model(Fs[:,t], this_keys, this_values, torch.tensor([num_objects]))
+        Es[:,t] = F.softmax(logit, dim=1)
         
         # update
         if t-1 in to_memorize:

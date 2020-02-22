@@ -50,9 +50,10 @@ class DAVIS_MO_Test(data.Dataset):
         return M
     
     def All_to_onehot(self, masks):
-        Ms = np.zeros((self.K, masks.shape[0], masks.shape[1], masks.shape[2]), dtype=np.uint8)
+        # num_objects as channel
+        Ms = np.zeros((masks.shape[0], self.K, masks.shape[1], masks.shape[2]), dtype=np.uint8)
         for n in range(masks.shape[0]):
-            Ms[:,n] = self.To_onehot(masks[n])
+            Ms[n] = self.To_onehot(masks[n])
         return Ms
 
     def __getitem__(self, index):
@@ -74,7 +75,8 @@ class DAVIS_MO_Test(data.Dataset):
                 # print('a')
                 N_masks[f] = 255
         
-        Fs = torch.from_numpy(np.transpose(N_frames.copy(), (3, 0, 1, 2)).copy()).float()
+        # transpose from (t, H, W, C) to (t, C, H, W)
+        Fs = torch.from_numpy(np.transpose(N_frames.copy(), (0, 3, 1, 2)).copy()).float()
         if self.single_object:
             N_masks = (N_masks > 0.5).astype(np.uint8) * (N_masks < 255).astype(np.uint8)
             Ms = torch.from_numpy(self.All_to_onehot(N_masks).copy()).float()
