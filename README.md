@@ -28,6 +28,27 @@ This repo is forked from [STM](https://github.com/seoungwugoh/STM)
     pip install -e .
     ```
 
+## The design of the structure of this repository
+
+1. This repo is focusing on experimenting the following problem
+
+    - Given a `video` (RGB array with size: t * c * W * H) with all frames and maybe a `init_mask` (array with size: t * n * W * H),
+
+        where the `n` of the `init_mask` depends on the problem with one-hot encoding
+        
+        and `c` is the channel of the video (usually 3)
+
+    - The model predict all `seg` (array with size: t * n * W * H) for the following frames of the `video`,
+
+        where the `n` of the `seg` depends on the problem
+
+2. Experiment paradigm
+
+    a. Training
+
+
+
+    b. Evaluation
 
 ## Usage
 
