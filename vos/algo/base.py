@@ -17,7 +17,7 @@ class AlgoBase:
 
     def __init__(self,
             OptimCls= optim.Adam,
-            learning_rate= 1e-3,
+            learning_rate= 1e-5,
             weight_decay= 1e-2,
             loss_fn= nn.CrossEntropyLoss(),
         ):
@@ -26,14 +26,19 @@ class AlgoBase:
     def initialize(self,
             model: nn.Module,
         ):
-        self._model = model
-        self._optim = self.OptimCls(
+        self.model = model
+        self.optim = self.OptimCls(
             self._model.parameters(),
             lr= self.learning_rate,
             weight_decay= self.weight_decay
         )
 
-    def train(self, data):
+    def state_dict(self):
+        """ summarize current state for snapshot
+        """
+        return dict()
+
+    def train(self, epoch_i, data):
         """ Perform one interation of optimization. Under most circumstance, it corresponding to
         one optim.step() call.
 
@@ -43,11 +48,12 @@ class AlgoBase:
                 "masks": torch.Tensor with shape (b, t, n, H, W), surving as ground truth in one-hot encoding
 
         @ returns:
-            opt_info: a namedtuple
+            train_info: a namedtuple with numbered statistics
+            extra_info: a dict depends on different problem, or algorithm
         """
         raise NotImplementedError
 
-    def eval(self, data):
+    def eval(self, epoch_i, data):
         """ Perform evaluation in terms of the given batch of data.
 
         @ Args:
@@ -57,5 +63,6 @@ class AlgoBase:
 
         @ returns:
             eval_info: a namedtuple
+            extra_info: a dict depends on different problem, or algorithm
         """
         raise NotImplementedError

@@ -36,7 +36,9 @@ This repo is forked from [STM](https://github.com/seoungwugoh/STM)
 
         where the `n` of the `init_mask` depends on the problem with one-hot encoding
         
-        and `c` is the channel of the video (usually 3)
+        and `c` is the channel of the video (usually 3).
+
+        All pixel values are normalized to [0.0, 1.0] scale.
 
     - The model predict all `seg` (array with size: `t, n, W, H`) for the following frames of the `video`,
 
