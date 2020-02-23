@@ -12,6 +12,7 @@ from vos.algo.image_pretrain import ImagePretrainAlgo
 from vos.runner.two_stage import TwoStageRunner
 
 from torch.nn import DataParallel
+from torch.utils.data import DataLoader
 
 def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     affinity = affinity_from_code(affinity_code)
@@ -29,17 +30,15 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     runner = TwoStageRunner(
         model= model,
         algo= algo,
-        DataLoaderCls= FrameSkipDataLoader,
+        pretrain_dataloader= DataLoader(coco_train, **config["pretrain_dataloader_kwargs"]),
+        dataloader= FrameSkipDataLoader(davis_train, **config["dataloader_kwargs"]),
+        eval_dataloader= FrameSkipDataLoader(davis_eval, **config["eval_dataloader_kwargs"]),
         **config["runner_kwargs"]
     )
 
     name = "VOS_problem"
     with logger_context(log_dir, run_ID, name, log_params= config, snapshot_mode= "last"):
-        runner.train(
-            pretrain_dataset= coco_train,
-            dataset= davis_train,
-            eval_dataset= davis_eval,
-        )
+        runner.train()
 
 def main(*args):
     build_and_train(*args)

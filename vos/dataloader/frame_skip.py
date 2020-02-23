@@ -1,4 +1,5 @@
-
+""" This DataLoader follows protocol of pytorch.utils.data.DataLoader
+"""
 
 class FrameSkipDataLoader:
     """ A DataLoader that loads video data, but sample some temporally ordered frames from a video

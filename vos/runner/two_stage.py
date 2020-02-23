@@ -11,19 +11,11 @@ class TwoStageRunner(RunnerBase, VideoMaskRunner):
     """
     def __init__(self,
             pretrain_optim_epochs,
-            pretrainDataLoaderCls= nn.DataLoader,
-            pretrain_dataloader_kwargs= dict(), # with the same dataloader, maybe kwargs are different
+            pretrain_dataloader,
             **kwargs
         ):
         save__init__args(locals())
         super(TwoStageRunner, self).__init__(**kwargs)
-
-    def startup(self, pretrain_dataset, dataset, eval_dataset= None):
-        super(TwoStageRunner, self).startup(dataset= dataset, eval_dataset= eval_dataset)
-        self.pretrain_dataloader = self.pretrainDataLoaderCls(
-            pretrain_dataset,
-            **self.pretrain_dataloader_kwargs
-        )
 
     def store_train_info(self, epoch_i, train_info, extra_info):
         super(TwoStageRunner, self).store_train_info(epoch_i, train_info, extra_info)

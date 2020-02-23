@@ -11,9 +11,8 @@ class RunnerBase:
     def __init__(self,
             model,
             algo,
-            DataLoaderCls= data.DataLoader,
-            dataloader_kwargs= dict(),
-            eval_dataloader_kwargs= dict(),
+            dataloader,
+            eval_dataloader,
             eval_interval= 10,
                 # The interval to store logs, params and do evaluation in terms of calling 
                 # algo.step()
@@ -24,13 +23,10 @@ class RunnerBase:
         ):
         save__init__args(locals())
 
-    def startup(self, dataset, eval_dataset= None):
+    def startup(self):
         """ The procedure of initializing all components.
         """
         self.algo.initialize(self.model)
-        self.dataloader = self.DataLoaderCls(dataset, **self.dataloader_kwargs)
-        if not eval_dataset is None:
-            self.eval_dataloader = self.DataLoaderCls(eval_dataset, **self.eval_dataloader_kwargs)
 
         self._train_infos = {k: list() for k in self.algo.train_info_fields}
         self._eval_infos = {k: list() for k in self.algo.eval_info_fields}
@@ -98,10 +94,10 @@ class RunnerBase:
         """
         pass
 
-    def train(self, dataset, eval_dataset= None):
+    def train(self):
         """ The main loop of the experiment.
         """
-        self.startup(dataset, eval_dataset)
+        self.startup()
 
         for epoch_i in self.max_optim_epochs:
             for batch_i, data in enumerate(self.dataloader):

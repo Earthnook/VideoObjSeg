@@ -22,6 +22,9 @@ def get_default_config():
             root= dataset_root_path,
             mode= "val"
         ),
+        pretrain_dataloader_kwargs= dict(), # for torch DataLoader
+        dataloader_kwargs= dict(), # for a customized DataLoader
+        eval_dataloader_kwargs= dict(), # for a customized DataLoader
         algo_kwargs = dict(
             data_augment_kwargs= dict(
                 angle_max= 90.,
@@ -33,9 +36,6 @@ def get_default_config():
         ),
         runner_kwargs = dict(
             pretrain_optim_epochs= int(1e5),
-            pretrain_dataloader_kwargs= dict(), # for torch DataLoader
-            dataloader_kwargs= dict(), # for a customized DataLoader
-            eval_dataloader_kwargs= dict(), # for a customized DataLoader
             eval_interval= 5,
             max_optim_epochs= int(1e5),
         )
