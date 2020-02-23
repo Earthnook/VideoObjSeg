@@ -107,7 +107,7 @@ class RunnerBase:
             for batch_i, data in enumerate(self.dataloader):
                 train_info, extra_info = self.algo.train(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
-            if not eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:
+            if not self.eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:
                 for eval_data in self.eval_dataloader:
                     eval_info, extra_info = self.algo.eval(epoch_i, eval_data)
                     self.store_eval_info(epoch_i, eval_info, extra_info)

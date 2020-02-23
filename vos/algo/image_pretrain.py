@@ -1,4 +1,5 @@
 from vos.algo.base import AlgoBase, TrainInfo, EvalInfo
+from vos.models.cross_entropy_onehot import CrossEntropyOneHot
 from vos.utils.quick_args import save__init__args
 
 from torchvision import transforms
@@ -6,25 +7,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-class CrossEntropyOneHot(nn.Module):
-    def __init__(self, *args, **kwargs):
-        super(CrossEntropyOneHot, self).__init__()
-        self.module = nn.CrossEntropyLoss(*args, **kwargs)
-
-    def forward(self, predicts, ys: torch.Tensor):
-        """
-        @ Args:
-            predicts: tensor with shape (b, T, n, H, W)
-            ys: tensor with shape (b, T, n, H, W)
-        """
-        _, _, n, H, W = ys.shape
-        ys = ys.reshape(-1, n, H, W)
-        predicts = predicts.reshape(-1, n, H, W)
-
-        _, targets = y.max(dim= 1)
-        return self.module(predicts, targets)
-
-class STMAlgorithm(AlgoBase):
+class ImagePretrainAlgo(AlgoBase):
     """ The algorithm re-producing STM training method
     https://arxiv.org/abs/1904.00607
     """
@@ -43,7 +26,7 @@ class STMAlgorithm(AlgoBase):
             **kwargs,
         ):
         save__init__args(locals())
-        super(STMAlgorithm, self).__init__(self, loss_fn= loss_fn, **kwargs)
+        super(ImagePretrainAlgo, self).__init__(self, loss_fn= loss_fn, **kwargs)
 
         # compose the image augmentation method
         transforms_methods = list()
@@ -155,8 +138,8 @@ class STMAlgorithm(AlgoBase):
 
         return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
             dict(
-                video= videos,
-                pred= pred,
+                videos= videos,
+                preds= pred,
             )
 
     def train(self, epoch_i, data):
@@ -179,8 +162,8 @@ class STMAlgorithm(AlgoBase):
 
         return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
             dict(
-                video= data["video"],
-                pred= pred,
+                videos= data["video"],
+                preds= pred,
             )
 
 
@@ -200,6 +183,6 @@ class STMAlgorithm(AlgoBase):
             )
         return EvalInfo(loss= loss.cpu().numpy()), \
             dict(
-                video= data["video"],
-                pred= pred,
+                videos= data["video"],
+                preds= pred,
             )
