@@ -153,7 +153,7 @@ for seq, V in enumerate(Testloader):
         img_E.save(os.path.join(test_path, '{:05d}.png'.format(f)))
 
     if VIZ:
-        from helpers import overlay_davis
+        from vos.utils.helpers import overlay_davis
         # visualize results #######################
         viz_path = os.path.join(OUTPUT_ROOT, 'viz/', code_name, seq_name)
         if not os.path.exists(viz_path):
