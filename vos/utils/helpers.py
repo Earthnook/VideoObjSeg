@@ -12,6 +12,7 @@ from torchvision import models
 
 # general libs
 import cv2
+import matplotlib
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -75,6 +76,35 @@ def overlay_davis(image,mask,colors=[255,0,0],cscale=2,alpha=0.4):
         im_overlay[countours,:] = 0
 
     return im_overlay.astype(image.dtype)
+
+def overlay_images(images, masks, alpha= 0.4):
+    """ overlay a batch of images with some preset colors. Usually, the images pixel values are
+    among [0, 1] scale.
+
+    @ Args:
+        images: np.ndarray with shape (b, C, H, W)
+        masks: np.ndarray with shape (b, n, H, W) of one-hot encoding
+
+    @ returns:
+        images: np.ndarray with shape (b, C, H, W)
+    """
+    n_foreground = masks.shape[1] - 1 # forget about background
+    images = images.copy()
+    img_plate = np.ones(images.shape[2:])
+
+    # Sample from HSV color space and tranform value to RGB color space
+    Hs = np.random.random(size= (n_foreground, 1))
+    SVs = np.ones([n_foreground, 2])
+    hsv = np.concatenate((Hs, SVs), axis= 1)
+    rgb = matplotlib.colors.hsv_to_rgb(hsv)
+
+    for mask_i in range(1, n_foreground+1):
+        for channel_i in range(3):
+            bin_mask = masks[:, mask_i]
+            images[:, channel_i] += \
+                (images[:, channel_i] - img_plate*bin_mask*rgb[mask_i, channel_i]) * alpha
+
+    return images
 
 
 

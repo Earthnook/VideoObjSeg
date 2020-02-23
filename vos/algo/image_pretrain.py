@@ -138,8 +138,9 @@ class ImagePretrainAlgo(AlgoBase):
 
         return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
             dict(
-                videos= videos,
-                preds= pred,
+                videos= videos.cpu().numpy(),
+                preds= pred.detach().cpu().numpy(),
+                n_objects= data["n_objects"]
             )
 
     def train(self, epoch_i, data):
@@ -162,8 +163,9 @@ class ImagePretrainAlgo(AlgoBase):
 
         return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
             dict(
-                videos= data["video"],
-                preds= pred,
+                videos= data["video"].cpu().numpy(),
+                preds= pred.detach().cpu().numpy(),
+                n_objects= data["n_objects"]
             )
 
 
@@ -183,6 +185,7 @@ class ImagePretrainAlgo(AlgoBase):
             )
         return EvalInfo(loss= loss.cpu().numpy()), \
             dict(
-                videos= data["video"],
-                preds= pred,
+                videos= data["video"].cpu().numpy(),
+                preds= pred.cpu().numpy(),
+                n_objects= data["n_objects"]
             )
