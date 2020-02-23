@@ -3,9 +3,11 @@ from vos.models.cross_entropy_onehot import CrossEntropyOneHot
 from vos.utils.quick_args import save__init__args
 
 from torchvision import transforms
+from torchvision.transforms import functional as visionF
 import torch
 from torch import nn
 from torch.nn import functional as F
+import numpy as np
 
 class ImagePretrainAlgo(AlgoBase):
     """ The algorithm re-producing STM training method
@@ -13,12 +15,12 @@ class ImagePretrainAlgo(AlgoBase):
     """
     def __init__(self,
             data_augment_kwargs= dict(
-                methods_kwargs = dict(
-                    affine= None,
-                    zooming= None,
-                    cropping= None,
-                ),  # a dict of torchvision.transforms arguments.
-                    # If None, this method will not be used.
+                affine_kwargs = dict(
+                    angle_max= 180.,
+                    translate_max= 50.,
+                    scale_max= 2., # NOTE: this is the exponent of e
+                    shear_max= 50.
+                ), # a dict of kwargs providing for torchvision.transforms.functional.affine
                 n_frames= 2, # 2 as minimum, usually 3
             ),
             clip_grad_norm= 1e9,
@@ -28,19 +30,6 @@ class ImagePretrainAlgo(AlgoBase):
         save__init__args(locals())
         super(ImagePretrainAlgo, self).__init__(self, loss_fn= loss_fn, **kwargs)
 
-        # compose the image augmentation method
-        transforms_methods = list()
-        for k, v in self.data_augment_kwargs["methods_kwargs"].items():
-            if k == "affine" and not v is None:
-                transforms_methods.append(
-                    transforms.RandomAffine(**v)
-                )
-            elif k == "cropping" and not v is None:
-                transforms_methods.append(
-                    transforms.RandomCrop(**v)
-                )
-        self.random_transforms = transforms.Compose(transforms_methods)
-        # NOTE: the Compose is applied on PIL image of size (C, H, W), not torch.Tensor
         self.to_pil_image = transforms.ToPILImage()
         self.to_tensor = transforms.ToTensor()
 
@@ -98,23 +87,59 @@ class ImagePretrainAlgo(AlgoBase):
         pred = np.argmax(estimates.detach().cpu().numpy(), axis= 1).astype(np.uint8)
         return pred, self.loss_fn(estimates, masks)
 
+    def random_transforms(self, image, mask):
+        """ randomly generate a transform arguments, and apply it to both image and mask
+        """
+        affine_ranges = self.data_augment_kwargs["affine_kwargs"]
+        # NOTE: np.random.uniform generates value for this dictionary
+        affine_kwargs = dict(
+            angle = np.random.uniform(
+                low= -affine_ranges["angle_max"],
+                high= affine_ranges["angle_max"],
+                size= (1,)
+            ),
+            translate = np.random.uniform(
+                low= -affine_ranges["translate_max"],
+                high= affine_ranges["translate_max"],
+                size= (2,)
+            ),
+            scale = np.random.uniform(
+                low= np.exp(-affine_ranges["scale_max"]),
+                high= np.exp(affine_ranges["scale_max"]),
+                size= (1,)
+            ),
+            shear = np.random.uniform(
+                log= -affine_ranges["shear_max"],
+                high= affine_ranges["shear_max"],
+                size= (2,)
+            ),
+        )
+
+        image = visionF.affine(image, **affine_kwargs)
+        mask = visionF.affine(mask, **affine_kwargs)
+        return image, mask
+
     def synth_videos(self, images, masks):
         """ Synthesize video clips by torch images. Return a torch.Tensor as a batch of
         video clips
         """
         pil_images = [self.to_pil_image(img) for img in images]
-        videos = []
+        pil_masks = [self.to_pil_image(msk) for msk in masks]
+        videos, m_videos = [], []
         with torch.no_grad():
-            for image in pil_images:
-                video = []
+            for image, mask in zip(pil_images, pil_masks):
+                video, m_video = [], []
                 for frame_i in range(self.data_augment_kwargs["n_frames"]):
-                    video.append(
-                        self.to_tensor(self.random_transforms(image))
-                    )
+                    frame, m_frame = self.random_transforms(image, mask)
+                    frame, m_frame = self.to_tensor(frame), self.to_tensor(m_frame)
+                    video.append(frame)
+                    m_video.append(m_frame)
                 videos.append(torch.stack(video))
+                m_videos.append(torch.stack(m_video))
         videos = torch.stack(videos)
+        m_videos = torch.stack(m_videos)
         # the returned videos should be batch-wise
-        return videos
+        return videos, m_videos
         
     def pretrain(self, epoch_i, data):
         """ As the paper described, pretrain on images is the first stage.

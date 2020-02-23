@@ -9,6 +9,8 @@ dependencies:
 - pillow
 - pip
 - pip:
+  - scikit-image
+  - pycocotools
   - torch==1.0.1.post2
   - torchvision==0.2.2.post2
   - opencv-python # It is recommended to install manually

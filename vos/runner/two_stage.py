@@ -2,15 +2,17 @@ from vos.utils.quick_args import save__init__args
 from vos.runner.base import RunnerBase
 from vos.runner.video_mask import VideoMaskRunner
 
+from torch.utils import data
+
 class TwoStageRunner(RunnerBase, VideoMaskRunner):
     """ The runner help with the STM training method.
     
     Details refering to https://arxiv.org/abs/1904.00607 and vos/algo/STM.py
     """
     def __init__(self,
-            DataLoaderCls,
-            pretrain_optim_steps,
-            pretrain_dataloader_kwargs, # with the same dataloader, maybe kwargs are different
+            pretrain_optim_epochs,
+            pretrainDataLoaderCls= nn.DataLoader,
+            pretrain_dataloader_kwargs= dict(), # with the same dataloader, maybe kwargs are different
             **kwargs
         ):
         save__init__args(locals())
@@ -18,7 +20,7 @@ class TwoStageRunner(RunnerBase, VideoMaskRunner):
 
     def startup(self, pretrain_dataset, dataset, eval_dataset= None):
         super(TwoStageRunner, self).startup(dataset= dataset, eval_dataset= eval_dataset)
-        self.pretrain_dataloader = self.DataLoaderCls(
+        self.pretrain_dataloader = self.pretrainDataLoaderCls(
             pretrain_dataset,
             **self.pretrain_dataloader_kwargs
         )
@@ -36,7 +38,7 @@ class TwoStageRunner(RunnerBase, VideoMaskRunner):
         self._log_extra_info(epoch_i)
 
     def _pre_train(self):
-        for epoch_i in self.pretrain_optim_steps:
+        for epoch_i in self.pretrain_optim_epochs:
             for batch_i, data in enumerate(self.pretrain_dataloader):
                 train_info, extra_info = self.algo.pretrain(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
@@ -45,7 +47,7 @@ class TwoStageRunner(RunnerBase, VideoMaskRunner):
         self.shutdown()
 
     def _main_train(self):
-        for epoch_i in self.max_optim_steps:
+        for epoch_i in self.max_optim_epochs:
             for batch_i, data in enumerate(self.dataloader):
                 train_info, extra_info = self.algo.train(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)

@@ -87,6 +87,35 @@ class DAVIS_MO_Test(data.Dataset):
             num_objects = torch.LongTensor([int(self.num_objects[video])])
             return Fs, Ms, num_objects, info
 
+class DAVIS_2017_TrainVal(DAVIS_MO_Test):
+    """ A proper dataset for DAVIS 2017
+    """
+    def __init__(self,
+            root,
+            mode= "train", # choose between "train", "val"
+            resolution= "480p",
+            subset_mode= False, # if subset_mode, it will choose a fixed 3 videos
+        ):
+        super(DAVIS_2017_TrainVal, self).__init__(root,
+            imset= "2017/{}.txt".format(mode),
+            resolution= resolution,
+        )
+        self._subset_mode = subset_mode
+
+    def __len__(self):
+        if self._subset_mode:
+            return 3
+        else:
+            return super(DAVIS_2017_TrainVal, self).__len__()
+
+    def __getitem__(self, idx):
+        Fs, Ms, n_objects, info = super(DAVIS_2017_TrainVal, self).__getitem__(idx)
+        # both Fs and Ms are in shape (t, n, H, W)
+        return info.update(dict(
+            video= Fs,
+            mask= Ms,
+            n_objects= n_objects,
+        ))
 
 
 if __name__ == '__main__':

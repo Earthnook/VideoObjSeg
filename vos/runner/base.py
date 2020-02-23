@@ -17,7 +17,7 @@ class RunnerBase:
             eval_interval= 10,
                 # The interval to store logs, params and do evaluation in terms of calling 
                 # algo.step()
-            max_optim_steps= 1e5,
+            max_optim_epochs= 1e5,
                 # The maximum number of training loops.
                 # NOTE: each train loop will go through all data in dataset ONCE.
             
@@ -103,7 +103,7 @@ class RunnerBase:
         """
         self.startup(dataset, eval_dataset)
 
-        for epoch_i in self.max_optim_steps:
+        for epoch_i in self.max_optim_epochs:
             for batch_i, data in enumerate(self.dataloader):
                 train_info, extra_info = self.algo.train(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
