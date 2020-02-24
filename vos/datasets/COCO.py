@@ -23,8 +23,9 @@ class COCO(data.Dataset):
         )
         # load categories
         self._cats = self.coco.loadCats(self.coco.getCatIds())
-        self._supercats = set([cat['supercategory'] for cat in self._cats])
-        self._output_mode = dict(cats= None, is_supcats= False)
+        self._catNms = [cat['name'] for cat in self._cats]
+        self._supNms = [cat['supercategory'] for cat in self._cats]
+        self._output_mode = dict(catNms= None, is_supcats= False)
 
         # reset self mode to all categories
         self.set_cats()
@@ -34,25 +35,31 @@ class COCO(data.Dataset):
         return self._cats
 
     @property
-    def all_super_categories(self):
-        return self._supercats
+    def all_super_categories_names(self):
+        return self._supNms
 
-    def set_cats(self, cats: list= None, is_supcats= False):
+    def set_cats(self, cats: list= None, is_supcats= True):
         """ Given category, the dataset will only output all items from that dataset.
+        And configure the output mask is in terms of supcats or cats.
         If not provided, all images will be output from __getitem__
         """
-        self._output_mode["cats"] = cats
+        self._output_mode["catNms"] = cats
         self._output_mode["is_supcats"] = is_supcats
 
-        if self._output_mode["cats"] is None:
-            cats = self._cats
+        if self._output_mode["catNms"] is None:
+            self.imgIds = self.coco.getImgIds()
         else:
-            cats = self._output_mode["cats"]
-
-        if self._output_mode["is_supcats"]:
-            self.imgIds = self.coco.getImgIds(catIds= self.coco.getCatIds(supNms= cats))
-        else:
-            self.imgIds = self.coco.getImgIds(catIds= self.coco.getCatIds(catNms= cats))
+            catNms = self._output_mode["catNms"]
+            if self._output_mode["is_supcats"]:
+                self.imgIds = self.coco.getImgIds(
+                    imgIds= self.coco.getImgIds(),
+                    catIds= self.coco.getCatIds(supNms= catNms)
+                )
+            else:
+                self.imgIds = self.coco.getImgIds(
+                    imgIds= self.coco.getImgIds(),
+                    catIds= self.coco.getCatIds(catNms= catNms)
+                )
 
     def __len__(self):
         if self._is_subset:
@@ -73,15 +80,26 @@ class COCO(data.Dataset):
         annIds = self.coco.getAnnIds(imgIds= img["id"])
         anns = self.coco.loadAnns(annIds)
 
-        _, H, W = image.shape()
-        mask = np.empty((len(self._supercats), H, W))
-        mask = [self.coco.annToMask(ann) for ann in anns]
-        mask = np.array(mask)
+        _, H, W = image.shape
+        n_cats = len(self._supNms if self._output_mode["is_supcats"] else self._catNms)
+        mask = np.empty((n_cats, H, W), dtype= np.uint8) # a background
+        bg = np.ones((1, H, W), dtype= np.uint8)
+
+        for ann in anns:
+            cat = self._cats[ann["category_id"]]
+            if self._output_mode["is_supcats"]:
+                msk_idx = [i for i, name in enumerate(self._supNms) if name == cat["supercategory"]][0]
+            else:
+                msk_idx = [i for i, name in enumerate(self._supNms) if name == cat["name"]][0]
+            ann_mask = self.coco.annToMask(ann)
+            mask[msk_idx] |= ann_mask
+            bg[0] &= (1-mask)
+        mask = np.concatenate([bg, mask], axis= 0)
 
         return dict(
             image= image,
-            mask= mask,
-            anns= anns
+            mask= mask, # NOTE: 0-th dimension of mask is (n_cats+1)
+            anns= anns,
         )
 
 if __name__ == "__main__":
