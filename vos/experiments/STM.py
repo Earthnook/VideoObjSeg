@@ -28,6 +28,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     algo = ImagePretrainAlgo(**config["algo_kwargs"])
 
     runner = TwoStageRunner(
+        affinity= affinity,
         model= model,
         algo= algo,
         pretrain_dataloader= DataLoader(coco_train, **config["pretrain_dataloader_kwargs"]),

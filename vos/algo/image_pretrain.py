@@ -28,7 +28,7 @@ class ImagePretrainAlgo(AlgoBase):
             **kwargs,
         ):
         save__init__args(locals())
-        super(ImagePretrainAlgo, self).__init__(self, loss_fn= loss_fn, **kwargs)
+        super(ImagePretrainAlgo, self).__init__(loss_fn= loss_fn, **kwargs)
 
         self.to_pil_image = transforms.ToPILImage()
         self.to_tensor = transforms.ToTensor()

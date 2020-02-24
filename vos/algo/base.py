@@ -16,10 +16,10 @@ class AlgoBase:
     eval_info_fields = tuple(f for f in EvalInfo._fields) # copy
 
     def __init__(self,
+            loss_fn, # A torch.Tensor version loss function which should be tractable
             OptimCls= optim.Adam,
             learning_rate= 1e-5,
             weight_decay= 1e-2,
-            loss_fn= nn.CrossEntropyLoss(),
         ):
         save__init__args(locals())
 
@@ -28,7 +28,7 @@ class AlgoBase:
         ):
         self.model = model
         self.optim = self.OptimCls(
-            self._model.parameters(),
+            self.model.parameters(),
             lr= self.learning_rate,
             weight_decay= self.weight_decay
         )

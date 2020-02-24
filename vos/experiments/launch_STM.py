@@ -75,6 +75,9 @@ def main(args):
     variants, log_dirs = make_variants(*variant_levels)
     for i, variant in enumerate(variants):
         variants[i] = update_config(default_config, variant)
+        if args.debug > 0:
+            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 10
+            variants[i]["runner_kwargs"]["max_optim_epochs"] = 10
 
     run_experiments(
         script="vos/experiments/STM.py",

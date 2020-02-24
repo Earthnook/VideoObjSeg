@@ -2,6 +2,7 @@ from vos.utils.quick_args import save__init__args
 
 from exptools.logging import logger
 
+import psutil
 import torch
 from torch.utils import data
 
@@ -9,6 +10,7 @@ class RunnerBase:
     """ The base runner for this supervised learning problem.
     """
     def __init__(self,
+            affinity,
             model,
             algo,
             dataloader,
@@ -25,7 +27,29 @@ class RunnerBase:
 
     def startup(self):
         """ The procedure of initializing all components.
+        And call to move to cuda if available
         """
+        p = psutil.Process()
+        try:
+            if (self.affinity.get("master_cpus", None) is not None and
+                    self.affinity.get("set_affinity", True)):
+                p.cpu_affinity(self.affinity["master_cpus"])
+            cpu_affin = p.cpu_affinity()
+        except AttributeError:
+            cpu_affin = "UNAVAILABLE MacOS"
+        logger.log(f"Runner {getattr(self, 'rank', '')} master CPU affinity: "
+            f"{cpu_affin}.")
+        if self.affinity.get("master_torch_threads", None) is not None:
+            torch.set_num_threads(self.affinity["master_torch_threads"])
+        logger.log(f"Runner {getattr(self, 'rank', '')} master Torch threads: "
+            f"{torch.get_num_threads()}.")
+
+        if self.affinity.get("cuda_idx", None) is None:
+            device = torch.device("cpu")
+        else:
+            device = torch.device("cuda", self.affinity["cuda_idx"])
+        self.model.to(device= device)
+
         self.algo.initialize(self.model)
 
         self._train_infos = {k: list() for k in self.algo.train_info_fields}
@@ -99,14 +123,16 @@ class RunnerBase:
         """
         self.startup()
 
-        for epoch_i in self.max_optim_epochs:
+        for epoch_i in range(self.max_optim_epochs):
             for batch_i, data in enumerate(self.dataloader):
                 train_info, extra_info = self.algo.train(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
             if not self.eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:
+                self.model.eval()
                 for eval_data in self.eval_dataloader:
                     eval_info, extra_info = self.algo.eval(epoch_i, eval_data)
                     self.store_eval_info(epoch_i, eval_info, extra_info)
+                self.model.train()
             self.log_diagnostic(epoch_i)
 
         self.shutdown()
