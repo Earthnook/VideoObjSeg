@@ -31,8 +31,22 @@ class COCO(data.Dataset):
         self.set_cats()
 
     @property
+    def n_objects(self):
+        """ NOTE: this method depends on category mode (refer to set_cats).
+        And background is also marked as an object
+        """
+        if self._output_mode["is_supcats"]:
+            return len(self._supNms)+1
+        else:
+            return len(self._catNms)+1
+
+    @property
     def all_categories(self):
         return self._cats
+
+    @property
+    def all_categories_names(self):
+        return self._catNms
 
     @property
     def all_super_categories_names(self):
