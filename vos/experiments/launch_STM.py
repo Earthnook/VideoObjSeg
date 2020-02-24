@@ -78,6 +78,9 @@ def main(args):
         if args.debug > 0:
             variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 10
             variants[i]["runner_kwargs"]["max_optim_epochs"] = 10
+            variants[i]["pretrain_dataset_kwargs"]["is_subset"] = True
+            variants[i]["train_dataset_kwargs"]["is_subset"] = True
+            variants[i]["eval_dataset_kwargs"]["is_subset"] = True
 
     run_experiments(
         script="vos/experiments/STM.py",

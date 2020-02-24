@@ -36,7 +36,7 @@ class DAVIS_MO_Test(data.Dataset):
                 _mask480 = np.array(Image.open(os.path.join(self.mask480_dir, _video, '00000.png')).convert("P"))
                 self.size_480p[_video] = np.shape(_mask480)
 
-        self.K = 11
+        self.K = 12
         self.single_object = single_object
 
     def __len__(self):
@@ -94,17 +94,17 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
             root,
             mode= "train", # choose between "train", "val"
             resolution= "480p",
-            subset_mode= False, # if subset_mode, it will choose a fixed 3 videos
+            is_subset= False, # if subset_mode, it will choose a fixed 3 videos
         ):
         super(DAVIS_2017_TrainVal, self).__init__(root,
             imset= "2017/{}.txt".format(mode),
             resolution= resolution,
         )
-        self._subset_mode = subset_mode
+        self._is_subset = is_subset
 
     def __len__(self):
-        if self._subset_mode:
-            return 3
+        if self._is_subset:
+            return 10
         else:
             return super(DAVIS_2017_TrainVal, self).__len__()
 

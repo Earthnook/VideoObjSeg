@@ -62,7 +62,7 @@ class ImagePretrainAlgo(AlgoBase):
             prev_key, prev_value = self.model(
                 frames[:, t-1],
                 estimates[:, t-1],
-                torch.tensor([n_objects])
+                n_objects,
             )
 
             if t == 0:
@@ -76,7 +76,7 @@ class ImagePretrainAlgo(AlgoBase):
                 frames[:, t],
                 this_keys,
                 this_values,
-                torch.tensor([n_objects]),
+                n_objects,
             )
             estimates[:, 0] = F.softmax(logit, dim= 1)
 
@@ -97,22 +97,22 @@ class ImagePretrainAlgo(AlgoBase):
                 low= -affine_ranges["angle_max"],
                 high= affine_ranges["angle_max"],
                 size= (1,)
-            ),
+            ).item(),
             translate = np.random.uniform(
                 low= -affine_ranges["translate_max"],
                 high= affine_ranges["translate_max"],
                 size= (2,)
-            ),
+            ).tolist(),
             scale = np.random.uniform(
                 low= np.exp(-affine_ranges["scale_max"]),
                 high= np.exp(affine_ranges["scale_max"]),
                 size= (1,)
-            ),
+            ).item(),
             shear = np.random.uniform(
-                log= -affine_ranges["shear_max"],
+                low= -affine_ranges["shear_max"],
                 high= affine_ranges["shear_max"],
-                size= (2,)
-            ),
+                size= (1,)
+            ).item(),
         )
 
         image = visionF.affine(image, **affine_kwargs)
@@ -153,9 +153,10 @@ class ImagePretrainAlgo(AlgoBase):
 
         self.optim.zero_grad()
         pred, loss = self.step(
-            model_input= videos,
-            ground_truth= masks,
-            n_objects= data["n_objects"]
+            frames= videos,
+            masks= masks,
+            n_objects= data["n_objects"],
+            Mem_every= 1,
         )
         loss.backward()
         grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
@@ -178,9 +179,10 @@ class ImagePretrainAlgo(AlgoBase):
         """
         self.optim.zero_grad()
         pred, loss = self.step(
-            model_input= data["video"],
-            ground_truth= data["mask"],
-            n_objects= data["n_objects"]
+            frames= data["video"],
+            masks= data["mask"],
+            n_objects= data["n_objects"],
+            Mem_every= 1,
         )
         loss.backward()
         grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
@@ -204,9 +206,10 @@ class ImagePretrainAlgo(AlgoBase):
         """
         with torch.no_grad():
             pred, loss = self.step(
-                model_input= data["video"],
-                ground_truth= data["mask"],
-                n_objects= data["n_objects"]
+                frames= data["video"],
+                masks= data["mask"],
+                n_objects= data["n_objects"],
+                Mem_every= 1,
             )
         return EvalInfo(loss= loss.cpu().numpy()), \
             dict(
