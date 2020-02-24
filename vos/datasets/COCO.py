@@ -73,6 +73,8 @@ class COCO(data.Dataset):
         annIds = self.coco.getAnnIds(imgIds= img["id"])
         anns = self.coco.loadAnns(annIds)
 
+        _, H, W = image.shape()
+        mask = np.empty((len(self._supercats), H, W))
         mask = [self.coco.annToMask(ann) for ann in anns]
         mask = np.array(mask)
 

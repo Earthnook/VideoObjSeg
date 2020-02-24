@@ -1,10 +1,9 @@
 from vos.utils.quick_args import save__init__args
-from vos.runner.base import RunnerBase
 from vos.runner.video_mask import VideoMaskRunner
 
 from torch.utils import data
 
-class TwoStageRunner(RunnerBase, VideoMaskRunner):
+class TwoStageRunner(VideoMaskRunner):
     """ The runner help with the STM training method.
     
     Details refering to https://arxiv.org/abs/1904.00607 and vos/algo/STM.py

@@ -1,6 +1,7 @@
 """ This DataLoader follows protocol of pytorch.utils.data.DataLoader
 """
 from random import randint
+import re
 import torch
 from torch.utils.data import DataLoader
 from torch._six import container_abcs, string_classes, int_classes
@@ -37,7 +38,7 @@ class FrameSkipDataLoader(DataLoader):
             if isinstance(elem, torch.Tensor):
                 out = None
                 # NOTE: different from default collate_fn, it canont avoid memory copy
-                return torch.stack(batch)
+                return self.stack_videos(batch)
             elif elem_type.__module__ == 'numpy' and elem_type.__name__ != 'str_' \
                     and elem_type.__name__ != 'string_':
                 elem = batch[0]
