@@ -50,6 +50,8 @@ def get_default_config():
                 n_frames= 2,
             ),
             clip_grad_norm= 1e9,
+            learning_rate= 1e-5,
+            weight_decay= 1e-3,
         ),
         runner_kwargs = dict(
             pretrain_optim_epochs= int(1e5),
@@ -64,7 +66,7 @@ def main(args):
         n_cpu_core= 32,
         n_gpu= 8,
         gpu_per_run= 1,
-        contexts_per_gpu= 4,
+        contexts_per_gpu= 1,
     )
     default_config = get_default_config()
 

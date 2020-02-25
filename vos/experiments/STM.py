@@ -1,5 +1,6 @@
 """ The script that runs the experiment
 """
+import sys
 from exptools.launching.affinity import affinity_from_code
 from exptools.launching.variant import load_variant
 from exptools.logging.context import logger_context
