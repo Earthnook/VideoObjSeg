@@ -35,11 +35,11 @@ def pad_divide_by(in_list, d, in_size):
     out_list = []
     h, w = in_size
     if h % d > 0:
-        new_h = h + d - h % d
+        new_h = h + d - h % d # = ceil(h/d) * d
     else:
         new_h = h
     if w % d > 0:
-        new_w = w + d - w % d
+        new_w = w + d - w % d # = ceil(h/d) * d
     else:
         new_w = w
     lh, uh = int((new_h-h) / 2), int(new_h-h) - int((new_h-h) / 2)
@@ -83,7 +83,7 @@ def overlay_images(images, masks, alpha= 0.4):
 
     @ Args:
         images: np.ndarray with shape (b, C, H, W)
-        masks: np.ndarray with shape (b, n, H, W) of one-hot encoding
+        masks: np.ndarray with shape (b, n, H, W) of index encoding
 
     @ returns:
         images: np.ndarray with shape (b, C, H, W)

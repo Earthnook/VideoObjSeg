@@ -128,7 +128,7 @@ class ImagePretrainAlgo(AlgoBase):
         videos, m_videos = [], []
         with torch.no_grad():
             for image, mask in zip(pil_images, pil_masks):
-                video, m_video = [], []
+                video, m_video = [image], [mask]
                 for frame_i in range(self.data_augment_kwargs["n_frames"]):
                     frame, m_frame = self.random_transforms(image, mask)
                     frame, m_frame = self.to_tensor(frame), self.to_tensor(m_frame)
