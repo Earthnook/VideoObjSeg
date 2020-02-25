@@ -10,8 +10,8 @@ from torch._six import container_abcs, string_classes, int_classes
 """
 
 np_str_obj_array_pattern = re.compile(r'[SaUO]')
-default_collate_err_msg_format = (
-    "default_collate: batch must contain tensors, numpy arrays, numbers, "
+collate_fn_err_msg_format = (
+    "collate_fn: batch must contain tensors, numpy arrays, numbers, "
     "dicts or lists; found {}")
 
 class FrameSkipDataLoader(DataLoader):
@@ -27,7 +27,7 @@ class FrameSkipDataLoader(DataLoader):
         self._n_frames = n_frames
         self._skip_frame_range = skip_frame_range
         self._skip_increase_interval = skip_increase_interval
-        self._full_dataset_view = 0
+        self._full_dataset_view = 0 # because the iterator need this class method
         self._choose_skip_length()
         
         def collate_fn(batch):
@@ -45,7 +45,7 @@ class FrameSkipDataLoader(DataLoader):
                 if elem_type.__name__ == 'ndarray':
                     # array of string classes and object
                     if np_str_obj_array_pattern.search(elem.dtype.str) is not None:
-                        raise TypeError(default_collate_err_msg_format.format(elem.dtype))
+                        raise TypeError(collate_fn_err_msg_format.format(elem.dtype))
 
                     return collate_fn([torch.as_tensor(b) for b in batch])
                 elif elem.shape == ():  # scalars
@@ -64,7 +64,7 @@ class FrameSkipDataLoader(DataLoader):
                 transposed = zip(*batch)
                 return [collate_fn(samples) for samples in transposed]
 
-            raise TypeError(default_collate_err_msg_format.format(elem_type))
+            raise TypeError(collate_fn_err_msg_format.format(elem_type))
 
         super(FrameSkipDataLoader, self).__init__(dataset, collate_fn= collate_fn, **dataloader_kwargs)
 
@@ -78,7 +78,7 @@ class FrameSkipDataLoader(DataLoader):
     def stack_videos(self, batch):
         """ stack a list of torch.Tensor videos into a batch of data, by sampling from them.
         """
-        if len(batch[0].shape < 4):
+        if len(batch[0].shape) < 3:
             return torch.stack(batch, 0)
         # assuming each item is a tensor.Tensor with shape (t, C, H, W)
         samples = []
@@ -94,10 +94,10 @@ class FrameSkipDataLoader(DataLoader):
                 if self._n_frames == 1:
                     idxs = slice(clip_i, clip_i+1)
                 else:
-                    idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1)+1, (self._skip_length+1))    
+                    idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1), (self._skip_length+1))
                 samples.extend([item[idxs]])
         return torch.stack(samples, 0)
 
     def __iter__(self):
-        super(FrameSkipDataLoader, self).__iter__()
         self._full_dataset_view += 1
+        return super(FrameSkipDataLoader, self).__iter__()

@@ -11,7 +11,7 @@ class VideoMaskRunner(RunnerBase):
         videos: numpy.ndarray with shape (b, t, C, H, W)
         preds: numpy.ndarray with shape (b, t, n, H, W) with one-hot encoding
     """
-    def _store_extra_info(self, epoch_i, extra_info, n_select_frames= 3):
+    def _store_extra_info(self, epoch_i, extra_info, n_select_frames= 1):
         """ For the memory efficiency, this will only randomly choose `n_select_frames` of frames
         to store.
         """
@@ -34,11 +34,11 @@ class VideoMaskRunner(RunnerBase):
         preds = preds.reshape((-1, n, H, W))
 
         masked_images = overlay_images(images, preds)
-        self._extra_infos.extend([masked_images])
+        self._extra_infos.extend([image for image in masked_images])
 
     def _log_extra_info(self, epoch_i):
         # transpose from (b, C, H, W) to (b, H, W, C)
-        images = np.concatenate(self._extra_infos, axis= 0).transpose(0,2,3,1)
+        images = np.stack(self._extra_infos, axis= 0).transpose(0,2,3,1)
 
         # write to summary file
         tf_image_summary("predict masks", data=images, step= epoch_i)

@@ -40,6 +40,7 @@ class ImagePretrainAlgo(AlgoBase):
             Mem_every=None, Mem_number=None,
         ):
         """ go through the data and calculate the loss (torch.Variable)
+        And all arrays in this function are torch.Tensors
         @ Args:
             frames: batch-wise, shape (b, t, C, H, W)
             masks: batch-wise, shape (b, t, n, H, W)
@@ -54,7 +55,8 @@ class ImagePretrainAlgo(AlgoBase):
         else:
             raise NotImplementedError
 
-        estimates = torch.zeros_like(masks)
+        estimates = torch.zeros_like(masks, dtype= torch.float32)
+        logits = torch.zeros_like(masks, dtype= torch.float32)
         estimates[:, 0] = masks[:, 0]
 
         for t in range(1, n_frames):
@@ -78,14 +80,16 @@ class ImagePretrainAlgo(AlgoBase):
                 this_values,
                 n_objects,
             )
-            estimates[:, 0] = F.softmax(logit, dim= 1)
+            logits[:, t] = logit
+            estimates[:, t] = F.softmax(logit, dim= 1)
 
             # update memory
             if t-1 in to_memorize:
                 keys, values = this_keys, this_values
 
-        pred = np.argmax(estimates.detach().cpu().numpy(), axis= 1).astype(np.uint8)
-        return pred, self.loss_fn(estimates, masks)
+        pred = (estimates.detach() == estimates.detach().max(dim= 1, keepdim= True)[0])
+        pred = pred.to(dtype= torch.uint8)
+        return pred, self.loss_fn(logits[:, 1:], masks[:, 1:]) # only query frames are used
 
     def random_transforms(self, image, mask):
         """ randomly generate a transform arguments, and apply it to both image and mask.
@@ -174,7 +178,7 @@ class ImagePretrainAlgo(AlgoBase):
         return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
             dict(
                 videos= videos.cpu().numpy(),
-                preds= pred.detach().cpu().numpy(),
+                preds= pred.cpu().numpy(),
                 n_objects= data["n_objects"]
             )
 
@@ -200,7 +204,7 @@ class ImagePretrainAlgo(AlgoBase):
         return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
             dict(
                 videos= data["video"].cpu().numpy(),
-                preds= pred.detach().cpu().numpy(),
+                preds= pred.cpu().numpy(),
                 n_objects= data["n_objects"]
             )
 

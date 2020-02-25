@@ -204,11 +204,12 @@ class STM(nn.Module):
 
     def memorize(self, frame, masks, num_objects): 
         # memorize a frame 
-        num_objects = num_objects[0].item()
+        # if num_objects == 0, treat as 1 object
+        num_objects = max(num_objects.max().item(), 1)
         B, K, H, W = masks.shape
         # Due to previous coder, the interface requires `num_objects`, but it should be coherient
         # with mask size `K`. 
-        assert K == num_objects+1
+        assert K >= num_objects+1
 
         (frame, masks), pad = pad_divide_by([frame, masks], 16, (frame.size()[2], frame.size()[3]))
 
@@ -242,7 +243,8 @@ class STM(nn.Module):
         return logit
 
     def segment(self, frame, keys, values, num_objects): 
-        num_objects = num_objects[0].item()
+        # if num_objects == 0, treat as 1 object
+        num_objects = max(num_objects.max().item(), 1)
         B, K, keydim, T, H, W = keys.shape # B nope= 1
         B, K, valuedim, _, _, _ = values.shape
         # pad

@@ -91,7 +91,6 @@ def overlay_images(images, masks, alpha= 0.4):
     """
     n_foreground = masks.shape[1] - 1 # forget about background
     images = images.copy()
-    img_plate = np.ones(images.shape[2:])
 
     # Sample from HSV color space and tranform value to RGB color space
     Hs = np.random.random(size= (n_foreground, 1))
@@ -103,7 +102,7 @@ def overlay_images(images, masks, alpha= 0.4):
         for channel_i in range(3):
             bin_mask = masks[:, mask_i]
             images[:, channel_i] += \
-                (images[:, channel_i] - img_plate*bin_mask*rgb[mask_i, channel_i]) * alpha
+                (images[:, channel_i] - bin_mask*rgb[mask_i-1, channel_i]) * alpha
 
     return images
 

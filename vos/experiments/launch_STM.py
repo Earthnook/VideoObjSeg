@@ -26,10 +26,10 @@ def get_default_config():
             batch_size= 8,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
-            batch_size= 8,
+            batch_size= 4,
         ), # for a customized DataLoader
         eval_dataloader_kwargs= dict(
-            batch_size= 8,
+            batch_size= 4,
         ), # for a customized DataLoader
         algo_kwargs = dict(
             data_augment_kwargs= dict(
@@ -76,8 +76,9 @@ def main(args):
     for i, variant in enumerate(variants):
         variants[i] = update_config(default_config, variant)
         if args.debug > 0:
-            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 10
-            variants[i]["runner_kwargs"]["max_optim_epochs"] = 10
+            # make sure each complete iteration has gone through
+            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 1
+            variants[i]["runner_kwargs"]["max_optim_epochs"] = 5
             variants[i]["pretrain_dataset_kwargs"]["is_subset"] = True
             variants[i]["train_dataset_kwargs"]["is_subset"] = True
             variants[i]["eval_dataset_kwargs"]["is_subset"] = True

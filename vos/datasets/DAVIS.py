@@ -6,6 +6,7 @@ from PIL import Image
 import torch
 import torchvision
 from torch.utils import data
+from torch.nn import functional as F
 
 import glob
 
@@ -101,6 +102,7 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
             resolution= resolution,
         )
         self._is_subset = is_subset
+        self._img_resolution = (1080, 1920) if resolution == "1080p" else (480, 640)
 
     def __len__(self):
         if self._is_subset:
@@ -110,12 +112,14 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
 
     def __getitem__(self, idx):
         Fs, Ms, n_objects, info = super(DAVIS_2017_TrainVal, self).__getitem__(idx)
+        Fs = F.interpolate(Fs, size=(self._img_resolution[0], self._img_resolution[1]))
+        Ms = F.interpolate(Ms, size=(self._img_resolution[0], self._img_resolution[1]))
         # both Fs and Ms are in shape (t, n, H, W)
-        return info.update(dict(
+        return dict(
             video= Fs,
             mask= Ms,
             n_objects= n_objects,
-        ))
+        )
 
 
 if __name__ == '__main__':

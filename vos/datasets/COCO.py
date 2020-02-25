@@ -15,11 +15,13 @@ class COCO(data.Dataset):
     def __init__(self, root,
             mode= "train", # choose between "train", "val"
             is_subset= False, # If is subset, the length will be a fixed small length
-            image_size= (256, 256) # to normalize image size in order to make batch
+            image_size= (256, 256), # to normalize image size in order to make batch
+            max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
         ):
         self._root = root
         self._mode = mode
         self._is_subset = is_subset
+        self._max_n_objects = max_n_objects
         self.image_size = image_size
         self.coco = COCOapi(
             path.join(self._root, "annotations/instances_{}2017.json".format(self._mode))
@@ -96,19 +98,24 @@ class COCO(data.Dataset):
         anns = self.coco.loadAnns(annIds)
 
         H, W, _ = image.shape
-        n_cats = len(self._supNms if self._output_mode["is_supcats"] else self._catNms)
-        mask = np.empty((H, W, n_cats), dtype= np.uint8) # a background
-        bg = np.ones((H, W, 1), dtype= np.uint8)
+        mask = np.empty((H, W, self._max_n_objects), dtype= np.uint8)
+        bg = np.ones((H, W, 1), dtype= np.uint8) # a background
 
-        for ann in anns:
-            cat = [cat for cat in self._cats if cat["id"] == ann["category_id"]][0]
-            if self._output_mode["is_supcats"]:
-                msk_idx = [i for i, name in enumerate(self._supNms) if name == cat["supercategory"]][0]
-            else:
-                msk_idx = [i for i, name in enumerate(self._catNms) if name == cat["name"]][0]
+        n_objects = 0
+        for ann_i, ann in enumerate(anns):
+            """ Because of the multi-object tracking problem, there is no need to assign to
+            specific index.
+            """
+            # cat = [cat for cat in self._cats if cat["id"] == ann["category_id"]][0]
+            # if self._output_mode["is_supcats"]:
+            #     msk_idx = [i for i, name in enumerate(self._supNms) if name == cat["supercategory"]][0]
+            # else:
+            #     msk_idx = [i for i, name in enumerate(self._catNms) if name == cat["name"]][0]
+            if n_objects >= self._max_n_objects: break
             ann_mask = self.coco.annToMask(ann)
-            mask[:, :, msk_idx] |= ann_mask
+            mask[:, :, ann_i] |= ann_mask
             bg[:, :, 0] &= (1-ann_mask)
+            n_objects += 1
         mask = np.concatenate([bg, mask], axis= 2)
 
         # make the output with dimension order: (C, H, W)
@@ -118,7 +125,7 @@ class COCO(data.Dataset):
             image= image, # pixel in [0, 1] scale
             mask= mask, # NOTE: 0-th dimension of mask is (n_cats+1), 
                 # the order of the mas depends on self._supNms or self._catNms
-            n_objects= n_cats,
+            n_objects= n_objects,
         )
 
 if __name__ == "__main__":

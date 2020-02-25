@@ -17,5 +17,5 @@ class CrossEntropyOneHot(nn.Module):
         ys = ys.reshape(-1, n, H, W)
         predicts = predicts.reshape(-1, n, H, W)
 
-        _, targets = ys.max(dim= 2)
-        return self.module(predicts, targets)
+        _, targets = ys.max(dim= 1)
+        return self.module(predicts, targets.to(dtype= torch.long))
