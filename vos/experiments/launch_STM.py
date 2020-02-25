@@ -23,13 +23,13 @@ def get_default_config():
             mode= "val"
         ),
         pretrain_dataloader_kwargs= dict(
-            batch_size= 128,
+            batch_size= 8,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
-            batch_size= 128,
+            batch_size= 8,
         ), # for a customized DataLoader
         eval_dataloader_kwargs= dict(
-            batch_size= 128,
+            batch_size= 8,
         ), # for a customized DataLoader
         algo_kwargs = dict(
             data_augment_kwargs= dict(

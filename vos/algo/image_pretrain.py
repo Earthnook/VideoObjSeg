@@ -65,11 +65,11 @@ class ImagePretrainAlgo(AlgoBase):
                 n_objects,
             )
 
-            if t == 0:
+            if t-1 == 0:
                 this_keys, this_values = prev_key, prev_value
             else:
                 this_keys = torch.cat([keys, prev_key], dim= 3)
-                this_values = torch.vat([values, prev_value], dim= 3)
+                this_values = torch.cat([values, prev_value], dim= 3)
 
             # segment
             logit = self.model(
@@ -88,7 +88,10 @@ class ImagePretrainAlgo(AlgoBase):
         return pred, self.loss_fn(estimates, masks)
 
     def random_transforms(self, image, mask):
-        """ randomly generate a transform arguments, and apply it to both image and mask
+        """ randomly generate a transform arguments, and apply it to both image and mask.
+        Considering torchvision transform can only transform a single image, in requires
+        some meanuvers to do with mask.
+            NOTE: both arguments are torh.Tensor
         """
         affine_ranges = self.data_augment_kwargs["affine_kwargs"]
         # NOTE: np.random.uniform generates value for this dictionary
@@ -115,23 +118,29 @@ class ImagePretrainAlgo(AlgoBase):
             ).item(),
         )
 
-        image = visionF.affine(image, **affine_kwargs)
-        mask = visionF.affine(mask, **affine_kwargs)
+        image = self.to_tensor(visionF.affine(self.to_pil_image(image), **affine_kwargs))
+
+        n, H, W = mask.shape
+        layers_of_mask = []
+        for m in mask:
+            jittered_m = visionF.affine(self.to_pil_image(m), **affine_kwargs)
+            layers_of_mask.extend([self.to_tensor(jittered_m)])
+        mask = torch.cat(layers_of_mask, 0).to(dtype= torch.uint8)
+
         return image, mask
 
     def synth_videos(self, images, masks):
         """ Synthesize video clips by torch images. Return a torch.Tensor as a batch of
         video clips
         """
-        pil_images = [self.to_pil_image(img) for img in images]
-        pil_masks = [self.to_pil_image(msk) for msk in masks]
+        # pil_images = [self.to_pil_image(img) for img in images]
+        # pil_masks = [self.to_pil_image(msk) for msk in masks]
         videos, m_videos = [], []
         with torch.no_grad():
-            for image, mask in zip(pil_images, pil_masks):
+            for image, mask in zip(images, masks):
                 video, m_video = [image], [mask]
                 for frame_i in range(self.data_augment_kwargs["n_frames"]):
                     frame, m_frame = self.random_transforms(image, mask)
-                    frame, m_frame = self.to_tensor(frame), self.to_tensor(m_frame)
                     video.append(frame)
                     m_video.append(m_frame)
                 videos.append(torch.stack(video))

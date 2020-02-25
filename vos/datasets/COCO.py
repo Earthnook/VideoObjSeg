@@ -15,7 +15,7 @@ class COCO(data.Dataset):
     def __init__(self, root,
             mode= "train", # choose between "train", "val"
             is_subset= False, # If is subset, the length will be a fixed small length
-            image_size= (500, 500) # to normalize image size in order to make batch
+            image_size= (256, 256) # to normalize image size in order to make batch
         ):
         self._root = root
         self._mode = mode
@@ -118,7 +118,7 @@ class COCO(data.Dataset):
             image= image, # pixel in [0, 1] scale
             mask= mask, # NOTE: 0-th dimension of mask is (n_cats+1), 
                 # the order of the mas depends on self._supNms or self._catNms
-            n_objects= n_cats+1,
+            n_objects= n_cats,
         )
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from vos.utils.quick_args import save__init__args
 
 from exptools.logging import logger
 
+import os
 import psutil
 import torch
 from torch.utils import data
@@ -44,11 +45,10 @@ class RunnerBase:
         logger.log(f"Runner {getattr(self, 'rank', '')} master Torch threads: "
             f"{torch.get_num_threads()}.")
 
-        if self.affinity.get("cuda_idx", None) is None:
-            device = torch.device("cpu")
-        else:
-            device = torch.device("cuda", self.affinity["cuda_idx"])
-        self.model.to(device= device)
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(self.affinity.get("cuda_idx", ""))
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            self.model.to(device= device)
 
         self.algo.initialize(self.model)
 

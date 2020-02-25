@@ -194,18 +194,21 @@ class STM(nn.Module):
         self.Memory = Memory()
         self.Decoder = Decoder(256)
  
-    def Pad_memory(self, mems, num_objects, K):
+    def Pad_memory(self, mems, num_objects, B, K):
         pad_mems = []
         for mem in mems:
-            pad_mem = ToCuda(torch.zeros(1, K, mem.size()[1], 1, mem.size()[2], mem.size()[3]))
-            pad_mem[0,1:num_objects+1,:,0] = mem
+            pad_mem = ToCuda(torch.zeros(B, K, mem.size()[2], 1, mem.size()[3], mem.size()[4]))
+            pad_mem[:,1:num_objects+1,:,0] = mem
             pad_mems.append(pad_mem)
         return pad_mems
 
     def memorize(self, frame, masks, num_objects): 
         # memorize a frame 
         num_objects = num_objects[0].item()
-        _, K, H, W = masks.shape # B = 1
+        B, K, H, W = masks.shape
+        # Due to previous coder, the interface requires `num_objects`, but it should be coherient
+        # with mask size `K`. 
+        assert K == num_objects+1
 
         (frame, masks), pad = pad_divide_by([frame, masks], 16, (frame.size()[2], frame.size()[3]))
 
@@ -223,8 +226,10 @@ class STM(nn.Module):
             B_[arg] = torch.cat(B_list[arg], dim=0)
 
         r4, _, _, _, _ = self.Encoder_M(B_['f'], B_['m'], B_['o'])
-        k4, v4 = self.KV_M_r4(r4) # num_objects, 128 and 512, H/16, W/16
-        k4, v4 = self.Pad_memory([k4, v4], num_objects=num_objects, K=K)
+        k4, v4 = self.KV_M_r4(r4) # batch_size*num_objects, 128 and 512, H/16, W/16
+        k4 = k4.view(B, num_objects, k4.shape[1], k4.shape[2], k4.shape[3])
+        v4 = v4.view(B, num_objects, v4.shape[1], v4.shape[2], v4.shape[3])
+        k4, v4 = self.Pad_memory([k4, v4], num_objects=num_objects, B=B, K=K)
         return k4, v4
 
     def Soft_aggregation(self, ps, K):
@@ -238,24 +243,40 @@ class STM(nn.Module):
 
     def segment(self, frame, keys, values, num_objects): 
         num_objects = num_objects[0].item()
-        _, K, keydim, T, H, W = keys.shape # B = 1
+        B, K, keydim, T, H, W = keys.shape # B nope= 1
+        B, K, valuedim, _, _, _ = values.shape
         # pad
         [frame], pad = pad_divide_by([frame], 16, (frame.size()[2], frame.size()[3]))
 
         r4, r3, r2, _, _ = self.Encoder_Q(frame)
-        k4, v4 = self.KV_Q_r4(r4)   # 1, dim, H/16, W/16
-        
+        k4, v4 = self.KV_Q_r4(r4)   # B, dim, H/16, W/16
+
         # expand to ---  no, c, h, w
-        k4e, v4e = k4.expand(num_objects,-1,-1,-1), v4.expand(num_objects,-1,-1,-1) 
-        r3e, r2e = r3.expand(num_objects,-1,-1,-1), r2.expand(num_objects,-1,-1,-1)
+        k4e, v4e = k4.expand(B, num_objects,-1,-1,-1), v4.expand(B, num_objects,-1,-1,-1) 
+        r3e, r2e = r3.expand(B, num_objects,-1,-1,-1), r2.expand(B, num_objects,-1,-1,-1)
         
-        # memory select kv:(1, K, C, T, H, W)
-        m4, viz = self.Memory(keys[0,1:num_objects+1], values[0,1:num_objects+1], k4e, v4e)
+        # make all objects into batch
+        k4e, v4e, r3e, r2e = \
+            k4e.view(B*num_objects, k4e.shape[2],k4e.shape[3],k4e.shape[4]), \
+            v4e.view(B*num_objects, v4e.shape[2],v4e.shape[3],v4e.shape[4]), \
+            r3e.view(B*num_objects, r3e.shape[2],r3e.shape[3],r3e.shape[4]), \
+            r2e.view(B*num_objects, r2e.shape[2],r2e.shape[3],r2e.shape[4])
+
+        # memory select kv: (B*no, C, T, H, W)
+        m4, viz = self.Memory(
+            keys[:,1:num_objects+1].view(B*num_objects, keydim, T, H, W),
+            values[:,1:num_objects+1].view(B*num_objects, valuedim, T, H, W),
+            k4e,
+            v4e
+        )
         logits = self.Decoder(m4, r3e, r2e)
-        ps = F.softmax(logits, dim=1)[:,1] # no, h, w  
+        ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
         #ps = indipendant possibility to belong to each object
         
-        logit = self.Soft_aggregation(ps, K) # 1, K, H, W
+        logit = self.Soft_aggregation(ps, K)[0] # B*K, H, W
+
+        # recover from batch B, K, h_, w_
+        logit = logit.view(B, K, logit.shape[1], logit.shape[2])
 
         if pad[2]+pad[3] > 0:
             logit = logit[:,:,pad[2]:-pad[3],:]

@@ -22,6 +22,7 @@ import copy
 
 
 def ToCuda(xs):
+    # move the tensor to cuda
     if torch.cuda.is_available():
         if isinstance(xs, list) or isinstance(xs, tuple):
             return [x.cuda() for x in xs]
