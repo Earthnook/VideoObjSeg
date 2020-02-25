@@ -6,7 +6,7 @@ from exptools.logging.context import logger_context
 
 from vos.datasets.COCO import COCO
 from vos.datasets.DAVIS import DAVIS_2017_TrainVal
-from vos.dataloader.frame_skip import FrameSkipDataLoader
+from vos.datasets.frame_skip import FrameSkipDataset
 from vos.models.STM import STM
 from vos.algo.image_pretrain import ImagePretrainAlgo
 from vos.runner.two_stage import TwoStageRunner
@@ -20,7 +20,10 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     # build the components for the experiment and run
     coco_train = COCO(**config["pretrain_dataset_kwargs"])
-    davis_train = DAVIS_2017_TrainVal(**config["train_dataset_kwargs"])
+    davis_train = FrameSkipDataset(
+        DAVIS_2017_TrainVal(**config["train_dataset_kwargs"]),
+        **config["frame_skip_dataset_kwargs"]
+    )
     davis_eval = DAVIS_2017_TrainVal(**config["eval_dataset_kwargs"])
 
     model = DataParallel(STM())
@@ -32,8 +35,11 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         model= model,
         algo= algo,
         pretrain_dataloader= DataLoader(coco_train, **config["pretrain_dataloader_kwargs"]),
-        dataloader= FrameSkipDataLoader(davis_train, **config["dataloader_kwargs"]),
-        eval_dataloader= FrameSkipDataLoader(davis_eval, **config["eval_dataloader_kwargs"]),
+        dataloader= DataLoader(davis_train, 
+            collate_fn= FrameSkipDataset.collate_fn,
+            **config["dataloader_kwargs"]
+        ),
+        eval_dataloader= DataLoader(davis_eval, **config["eval_dataloader_kwargs"]),
         **config["runner_kwargs"]
     )
 

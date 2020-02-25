@@ -22,14 +22,22 @@ def get_default_config():
             root= dataset_root_path,
             mode= "val"
         ),
+        frame_skip_dataset_kwargs = dict(
+            n_frames= 3,
+            skip_increase_interval= 50,
+        ),
         pretrain_dataloader_kwargs= dict(
             batch_size= 8,
+            shuffle= True,
+            num_workers= 4,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
             batch_size= 4,
+            shuffle= True,
+            num_workers= 4,
         ), # for a customized DataLoader
         eval_dataloader_kwargs= dict(
-            batch_size= 4,
+            batch_size= 1,
         ), # for a customized DataLoader
         algo_kwargs = dict(
             data_augment_kwargs= dict(
@@ -76,12 +84,16 @@ def main(args):
     for i, variant in enumerate(variants):
         variants[i] = update_config(default_config, variant)
         if args.debug > 0:
-            # make sure each complete iteration has gone through
+            # make sure each complete iteration has gone through and easy for debug
             variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 1
             variants[i]["runner_kwargs"]["max_optim_epochs"] = 5
             variants[i]["pretrain_dataset_kwargs"]["is_subset"] = True
             variants[i]["train_dataset_kwargs"]["is_subset"] = True
             variants[i]["eval_dataset_kwargs"]["is_subset"] = True
+            variants[i]["pretrain_dataloader_kwargs"]["shuffle"] = False
+            variants[i]["dataloader_kwargs"]["shuffle"] = False
+            variants[i]["pretrain_dataloader_kwargs"]["num_workers"] = 0
+            variants[i]["dataloader_kwargs"]["num_workers"] = 0
 
     run_experiments(
         script="vos/experiments/STM.py",

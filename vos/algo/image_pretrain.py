@@ -222,7 +222,7 @@ class ImagePretrainAlgo(AlgoBase):
                 frames= data["video"],
                 masks= data["mask"],
                 n_objects= data["n_objects"],
-                Mem_every= 1,
+                Mem_every= 5,
             )
         return EvalInfo(loss= loss.cpu().numpy()), \
             dict(
