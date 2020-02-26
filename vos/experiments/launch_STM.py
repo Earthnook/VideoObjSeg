@@ -54,9 +54,9 @@ def get_default_config():
             weight_decay= 1e-3,
         ),
         runner_kwargs = dict(
-            pretrain_optim_epochs= int(1e5),
+            pretrain_optim_epochs= int(1e2),
             eval_interval= 5,
-            max_optim_epochs= int(1e5),
+            max_optim_epochs= int(1e2),
         )
     )
 
