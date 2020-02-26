@@ -17,7 +17,6 @@ class COCO(data.Dataset):
             is_subset= False, # If is subset, the length will be a fixed small length
             image_size= (256, 256), # to normalize image size in order to make batch
             max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
-            year= "2017", # incase used on other dataset
         ):
         self._root = root
         self._mode = mode
@@ -95,9 +94,8 @@ class COCO(data.Dataset):
 
         img = self.coco.loadImgs(self.imgIds[idx])[0]
         # This image is in (H, W, C) shape
-        image = io.imread('%s/images/%s/%s'%(
+        image = io.imread('%s/images/%s'%(
             self._root,
-            self._mode + self._year,
             img['file_name']
         ))
 
