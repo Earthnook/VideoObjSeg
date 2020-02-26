@@ -44,8 +44,8 @@ class AlgoBase:
 
         @ Args:
             data: a dictionary with at least following k v pairs
-                "frames": torch.Tensor with shape (b, t, C, H, W)
-                "masks": torch.Tensor with shape (b, t, n, H, W), surving as ground truth in one-hot encoding
+                "video": a torch.Tensor with size (b, t, C, H, W), usually C == 3
+                "mask": a torch.Tenwor with size (b, t, n, H, W) with one-hot encoding
 
         @ returns:
             train_info: a namedtuple with numbered statistics
@@ -58,8 +58,8 @@ class AlgoBase:
 
         @ Args:
             data: a dictionary with at least following k v pairs
-                "frames": torch.Tensor with shape (b, t, C, H, W)
-                "masks": torch.Tensor with shape (b, t, n, H, W), surving as ground truth in one-hot encoding
+                "video": a torch.Tensor with size (b, t, C, H, W), usually C == 3
+                "mask": a torch.Tenwor with size (b, t, n, H, W) with one-hot encoding
 
         @ returns:
             eval_info: a namedtuple
