@@ -37,7 +37,8 @@ def get_default_config():
             num_workers= 4,
         ), # for a customized DataLoader
         eval_dataloader_kwargs= dict(
-            batch_size= 1,
+            batch_size= 4,
+            num_workers= 4,
         ), # for a customized DataLoader
         algo_kwargs = dict(
             data_augment_kwargs= dict(
