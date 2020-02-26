@@ -20,7 +20,6 @@ class COCO(data.Dataset):
         ):
         self._root = root
         self._mode = mode
-        self._year = year
         self._is_subset = is_subset
         self._max_n_objects = max_n_objects
         self.image_size = image_size
