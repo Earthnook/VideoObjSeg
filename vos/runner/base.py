@@ -4,6 +4,7 @@ from exptools.logging import logger
 
 import os
 import psutil
+from tqdm import tqdm
 import torch
 from torch.utils import data
 
@@ -124,7 +125,7 @@ class RunnerBase:
         self.startup()
 
         for epoch_i in range(self.max_optim_epochs):
-            for batch_i, data in enumerate(self.dataloader):
+            for batch_i, data in tqdm(enumerate(self.dataloader)):
                 train_info, extra_info = self.algo.train(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
             if not self.eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:

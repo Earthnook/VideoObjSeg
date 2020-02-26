@@ -1,6 +1,7 @@
 from vos.utils.quick_args import save__init__args
 from vos.runner.video_mask import VideoMaskRunner
 
+from tqdm import tqdm
 from torch.utils import data
 
 class TwoStageRunner(VideoMaskRunner):
@@ -30,14 +31,14 @@ class TwoStageRunner(VideoMaskRunner):
 
     def _pre_train(self):
         for epoch_i in range(self.pretrain_optim_epochs):
-            for batch_i, data in enumerate(self.pretrain_dataloader):
+            for batch_i, data in tqdm(enumerate(self.pretrain_dataloader)):
                 train_info, extra_info = self.algo.pretrain(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
             self.log_diagnostic(epoch_i)
 
     def _main_train(self):
         for epoch_i in range(self.max_optim_epochs):
-            for batch_i, data in enumerate(self.dataloader):
+            for batch_i, data in tqdm(enumerate(self.dataloader)):
                 train_info, extra_info = self.algo.train(epoch_i, data)
                 self.store_train_info(epoch_i, train_info, extra_info)
             if not self.eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:
