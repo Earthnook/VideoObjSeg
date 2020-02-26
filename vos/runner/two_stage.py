@@ -43,7 +43,7 @@ class TwoStageRunner(VideoMaskRunner):
                 self.store_train_info(epoch_i, train_info, extra_info)
             if not self.eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:
                 self.model.eval()
-                for eval_data in self.eval_dataloader:
+                for eval_data in tqdm(self.eval_dataloader):
                     eval_info, extra_info = self.algo.eval(epoch_i, eval_data)
                     self.store_eval_info(epoch_i, eval_info, extra_info)
                 self.model.train()
