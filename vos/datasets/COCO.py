@@ -17,12 +17,15 @@ class COCO(data.Dataset):
             is_subset= False, # If is subset, the length will be a fixed small length
             image_size= (256, 256), # to normalize image size in order to make batch
             max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
+            year= "2017", # incase used on other dataset
         ):
         self._root = root
         self._mode = mode
+        self._year = year
         self._is_subset = is_subset
         self._max_n_objects = max_n_objects
         self.image_size = image_size
+
         self.coco = COCOapi(
             path.join(self._root, "annotations/instances_{}2017.json".format(self._mode))
         )
@@ -92,7 +95,11 @@ class COCO(data.Dataset):
 
         img = self.coco.loadImgs(self.imgIds[idx])[0]
         # This image is in (H, W, C) shape
-        image = io.imread(img["coco_url"])
+        image = io.imread('%s/images/%s/%s'%(
+            self._root,
+            self._mode + self._year,
+            img['file_name']
+        ))
 
         annIds = self.coco.getAnnIds(imgIds= img["id"])
         anns = self.coco.loadAnns(annIds)
