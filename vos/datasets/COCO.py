@@ -97,7 +97,15 @@ class COCO(data.Dataset):
         annIds = self.coco.getAnnIds(imgIds= img["id"])
         anns = self.coco.loadAnns(annIds)
 
+        # incase of gray-scale image
+        if len(image.shape) == 2:
+            image = np.tile(image, (3,1,1)).transpose(1,2,0)
+        elif len(image.shape) == 3:
+            pass
+        else:
+            raise ValueError("Wrong image shape dimensions\n{}".format(str(img)))
         H, W, _ = image.shape
+
         mask = np.empty((H, W, self._max_n_objects), dtype= np.uint8)
         bg = np.ones((H, W, 1), dtype= np.uint8) # a background
 
@@ -132,21 +140,27 @@ if __name__ == "__main__":
     # test code
     import ptvsd
     import sys
-    ip_address = ('0.0.0.0', 5050)
-    print("Process: " + " ".join(sys.argv[:]))
-    print("Is waiting for attach at address: %s:%d" % ip_address, flush= True)
-    # Allow other computers to attach to ptvsd at this IP address and port.
-    ptvsd.enable_attach(address=ip_address, redirect_output= True)
-    # Pause the program until a remote debugger is attached
-    ptvsd.wait_for_attach()
-    print("Process attached, start running into experiment...", flush= True)
-    ptvsd.break_into_debugger()
+    # ip_address = ('0.0.0.0', 5050)
+    # print("Process: " + " ".join(sys.argv[:]))
+    # print("Is waiting for attach at address: %s:%d" % ip_address, flush= True)
+    # # Allow other computers to attach to ptvsd at this IP address and port.
+    # ptvsd.enable_attach(address=ip_address, redirect_output= True)
+    # # Pause the program until a remote debugger is attached
+    # ptvsd.wait_for_attach()
+    # print("Process attached, start running into experiment...", flush= True)
+    # ptvsd.break_into_debugger()
 
     root = sys.argv[1]
     dataset = COCO(root)
 
-    for i in range(len(dataset)):
-        x = dataset[i]
+    dataloader = data.DataLoader(dataset,
+        batch_size=128, 
+        shuffle= True, 
+        num_workers= 48
+    )
+
+    for i, b in enumerate(dataloader):
+        print("Get a batch, {}: type({})".format(i, type(b)))
 
     print("debug done...")
         
