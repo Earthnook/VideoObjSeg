@@ -86,7 +86,7 @@ class COCO(data.Dataset):
                 )
 
     @staticmethod
-    def normalize_fn(*images):
+    def default_normalize_fn(*images):
         """ Input image should follow numpy convention, which has shape (H, W, C)
         """
         image_size = (256, 256)
