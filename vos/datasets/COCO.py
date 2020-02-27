@@ -15,14 +15,18 @@ class COCO(data.Dataset):
     def __init__(self, root,
             mode= "train", # choose between "train", "val"
             is_subset= False, # If is subset, the length will be a fixed small length
-            image_size= (256, 256), # to normalize image size in order to make batch
+            normalize_fn= None, # A np.array method telling how to make sure all frames are in the
+                # same resolution, input is a sequence of torch.Tensors with shape (H, W, ?)
             max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
         ):
         self._root = root
         self._mode = mode
         self._is_subset = is_subset
         self._max_n_objects = max_n_objects
-        self.image_size = image_size
+        if normalize_fn is None:
+            self._normalize_fn = self.default_normalize_fn
+        else:
+            self._normalize_fn = normalize_fn
 
         self.coco = COCOapi(
             path.join(self._root, "annotations/instances_{}2017.json".format(self._mode))
@@ -81,6 +85,15 @@ class COCO(data.Dataset):
                     catIds= self.coco.getCatIds(catNms= catNms)
                 )
 
+    @staticmethod
+    def normalize_fn(*images):
+        """ Input image should follow numpy convention, which has shape (H, W, C)
+        """
+        image_size = (256, 256)
+        return [
+            resize(i, image_size) for i in images
+        ]
+
     def __len__(self):
         if self._is_subset:
             return SUBSET_LEN
@@ -96,7 +109,7 @@ class COCO(data.Dataset):
         image = io.imread('%s/images/%s'%(
             self._root,
             img['file_name']
-        ))
+        )).astype(np.float32)
 
         annIds = self.coco.getAnnIds(imgIds= img["id"])
         anns = self.coco.loadAnns(annIds)
@@ -131,8 +144,9 @@ class COCO(data.Dataset):
         mask = np.concatenate([bg, mask], axis= 2)
 
         # make the output with dimension order: (C, H, W)
-        image = np.array(resize(image, self.image_size), dtype= np.float32).transpose(2,0,1) // 255
-        mask = resize(mask, self.image_size).transpose(2,0,1).astype(np.uint8)
+        image, mask = self._normalize_fn(image, mask)
+        image = image.transpose(2,0,1).astype(np.float32) / 255
+        mask = mask.transpose(2,0,1).astype(np.uint8)
         return dict(
             image= image, # pixel in [0, 1] scale
             mask= mask, # NOTE: 0-th dimension of mask is (n_cats+1), 
