@@ -54,11 +54,9 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         algo= algo,
         pretrain_dataloader= DataLoader(coco_train, **config["pretrain_dataloader_kwargs"]),
         dataloader= DataLoader(davis_train, 
-            collate_fn= FrameSkipDataset.collate_fn,
             **config["dataloader_kwargs"]
         ),
         eval_dataloader= DataLoader(davis_eval,
-            collate_fn= FrameSkipDataset.collate_fn,
             **config["eval_dataloader_kwargs"]
         ),
         **config["runner_kwargs"]

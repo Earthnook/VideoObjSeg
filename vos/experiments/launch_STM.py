@@ -31,9 +31,9 @@ def get_default_config():
             subset_len= 8,
         ),
         pretrain_dataloader_kwargs= dict(
-            batch_size= 4,
+            batch_size= 8,
             shuffle= True,
-            num_workers= 4,
+            num_workers= 8,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
             batch_size= 4,
@@ -60,7 +60,7 @@ def get_default_config():
         ),
         runner_kwargs = dict(
             pretrain_optim_epochs= int(10),
-            eval_interval= 20,
+            eval_interval= 5,
             log_interval= 10, # in terms of the # of calling algo.train()
             max_optim_epochs= int(20),
         )
@@ -93,8 +93,10 @@ def main(args):
         variants[i] = update_config(default_config, variant)
         if args.debug > 0:
             # make sure each complete iteration has gone through and easy for debug
-            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 1
+            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 0
             variants[i]["runner_kwargs"]["max_optim_epochs"] = 5
+            variants[i]["runner_kwargs"]["eval_interval"] = 2
+            variants[i]["runner_kwargs"]["log_interval"] = 4
             variants[i]["pretrain_dataset_kwargs"]["is_subset"] = True
             variants[i]["train_dataset_kwargs"]["is_subset"] = True
             variants[i]["eval_dataset_kwargs"]["is_subset"] = True
@@ -102,6 +104,7 @@ def main(args):
             variants[i]["dataloader_kwargs"]["shuffle"] = False
             variants[i]["pretrain_dataloader_kwargs"]["num_workers"] = 0
             variants[i]["dataloader_kwargs"]["num_workers"] = 0
+            variants[i]["eval_dataloader_kwargs"]["num_workers"] = 0
             
     run_experiments(
         script="vos/experiments/STM.py",
