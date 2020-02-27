@@ -168,6 +168,8 @@ class ImagePretrainAlgo(AlgoBase):
             Calculation refering to book: 
             Pattern Recognition and Computer Vision: Second Chinese Conference, PRCV page 423
         """
+        gtruth = gtruth.astype(np.uint8)
+        pred = pred.astype(np.uint8)
         # calculate region similarity (a.k.a Intersection over Unit)
         IoU = np.sum(gtruth & pred) / np.sum(gtruth | pred)
 
@@ -236,7 +238,7 @@ class ImagePretrainAlgo(AlgoBase):
         grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optim.step()
         preds = preds.cpu().numpy()
-        gtruths = data["mask"]
+        gtruths = data["mask"].cpu().numpy()
 
         performance_status = self.calc_performance(preds, gtruths)
     
@@ -269,7 +271,7 @@ class ImagePretrainAlgo(AlgoBase):
                 Mem_every= 5,
             )
         preds = preds.cpu().numpy()
-        gtruths = data["mask"]
+        gtruths = data["mask"].cpu().numpy()
 
         performance_status = self.calc_performance(preds, gtruths)
 

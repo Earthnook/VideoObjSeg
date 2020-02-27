@@ -37,13 +37,16 @@ class TwoStageRunner(VideoMaskRunner):
                 itr_i += 1
                 train_info, extra_info = self.algo.pretrain(itr_i, data)
                 self.store_train_info(itr_i, train_info, extra_info)
+
                 if not self.eval_dataloader is None and itr_i % self.eval_interval == 0:
                     self.model.eval()
                     for eval_data in tqdm(self.eval_dataloader):
                         eval_info, extra_info = self.algo.eval(itr_i, eval_data)
                         self.store_eval_info(itr_i, eval_info, extra_info)
                     self.model.train()
-                self.log_diagnostic(itr_i)
+                
+                if itr_i % self.log_interval == 0:
+                    self.log_diagnostic(itr_i)
 
     def _main_train(self):
         itr_i = 0
@@ -58,7 +61,9 @@ class TwoStageRunner(VideoMaskRunner):
                         eval_info, extra_info = self.algo.eval(itr_i, eval_data)
                         self.store_eval_info(itr_i, eval_info, extra_info)
                     self.model.train()
-                self.log_diagnostic(itr_i)
+                    
+                if itr_i % self.log_interval == 0:
+                    self.log_diagnostic(itr_i)
 
     def train(self):
         """ one more image dataset to pre-train the network

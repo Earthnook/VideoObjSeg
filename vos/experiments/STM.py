@@ -57,7 +57,10 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
             collate_fn= FrameSkipDataset.collate_fn,
             **config["dataloader_kwargs"]
         ),
-        eval_dataloader= DataLoader(davis_eval, **config["eval_dataloader_kwargs"]),
+        eval_dataloader= DataLoader(davis_eval,
+            collate_fn= FrameSkipDataset.collate_fn,
+            **config["eval_dataloader_kwargs"]
+        ),
         **config["runner_kwargs"]
     )
 

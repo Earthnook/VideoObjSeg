@@ -28,6 +28,7 @@ class FrameSkipDataset(Dataset):
         return self._max_clips_sample * self._dataset.__len__()
 
     def __getitem__(self, idx):
+        idx = int(idx // self._max_clips_sample)
         item = self._dataset.__getitem__(idx)
         _, video = self.stack_video(item["video"])
         b, mask = self.stack_video(item["mask"])
@@ -85,6 +86,6 @@ class FrameSkipDataset(Dataset):
                 b_[k].extend([item[k]])
 
         for k in b_.keys():
-            b_[k] = torch.cat(b_[k], dim= 0)
+            b_[k] = torch.cat(b_[k], dim= 0).contiguous()
 
         return b_

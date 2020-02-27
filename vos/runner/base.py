@@ -17,7 +17,7 @@ class RunnerBase:
             algo,
             dataloader,
             eval_dataloader= None,
-            log_intercal= 50, # in terms of the # of calling algo.train()
+            log_interval= 50, # in terms of the # of calling algo.train()
             eval_interval= 10, # in terms of the # of calling algo.train()
             max_optim_epochs= 1e5,
                 # The maximum number of training epochs.
@@ -137,7 +137,7 @@ class RunnerBase:
                         self.store_eval_info(itr_i, eval_info, extra_info)
                     self.model.train()
 
-                if itr_i % self.itr_interval == 0:
+                if itr_i % self.log_interval == 0:
                     self.log_diagnostic(itr_i)
 
         self.shutdown()

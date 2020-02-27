@@ -60,8 +60,8 @@ def get_default_config():
         ),
         runner_kwargs = dict(
             pretrain_optim_epochs= int(10),
-            eval_interval= 10,
-            log_intercal= 20, # in terms of the # of calling algo.train()
+            eval_interval= 20,
+            log_interval= 10, # in terms of the # of calling algo.train()
             max_optim_epochs= int(20),
         )
     )
@@ -102,7 +102,7 @@ def main(args):
             variants[i]["dataloader_kwargs"]["shuffle"] = False
             variants[i]["pretrain_dataloader_kwargs"]["num_workers"] = 0
             variants[i]["dataloader_kwargs"]["num_workers"] = 0
-
+            
     run_experiments(
         script="vos/experiments/STM.py",
         affinity_code=affinity_code,

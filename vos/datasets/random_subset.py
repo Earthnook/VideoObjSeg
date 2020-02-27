@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 
-from numpy.random import randint
+from numpy.random import choice
 
 from vos.utils.quick_args import save__init__args
 
@@ -22,15 +22,15 @@ class RandomSubset(Dataset):
     def sample_subset(self):
         """ randomly sample a subset of the given dataset
         """
-        data_len = len(self._dataset)
-        self._idxs = randint(data_len, size= self._subset_len)
+        data_len = self._dataset.__len__()
+        self._idxs = choice(range(data_len), size= self._subset_len, replace= False)
 
     def __len__(self):
         return self._subset_len
 
     def __getitem__(self, idx):
         self._n_getitem_ += 1
-        item = self._dataset[self._idxs[idx]]
+        item = self._dataset.__getitem__(self._idxs[idx])
         
         if self._n_getitem_ % self._subset_len == 0:
             self.sample_subset()
