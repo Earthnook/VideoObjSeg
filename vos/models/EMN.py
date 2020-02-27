@@ -1,4 +1,5 @@
 from vos.models.STM import STM
+from vos.utils.helpers import pad_divide_by
 
 import torch
 from torch import nn
@@ -61,4 +62,47 @@ class EMN(STM):
     """
     def __init__(self):
         super(EMN, self).__init__()
+        self.Encoder_Q = SiamQueryEncoder()
+        self.Decoder = PyramidDecoder()
 
+    def segment(self, frame, keys, values, num_objects): 
+        # if num_objects == 0, treat as 1 object
+        num_objects = max(num_objects.max().item(), 1)
+        B, K, keydim, T, H, W = keys.shape # B nope= 1
+        B, K, valuedim, _, _, _ = values.shape
+        # pad
+        [frame], pad = pad_divide_by([frame], 16, (frame.size()[2], frame.size()[3]))
+
+        r4 = self.Encoder_Q(frame)
+        k4, v4 = self.KV_Q_r4(r4)   # B, dim, H/16, W/16
+
+        # expand to ---  no, c, h, w
+        k4e, v4e = k4.expand(B, num_objects,-1,-1,-1), v4.expand(B, num_objects,-1,-1,-1) 
+        
+        # make all objects into batch
+        k4e, v4e = \
+            k4e.view(B*num_objects, k4e.shape[2],k4e.shape[3],k4e.shape[4]), \
+            v4e.view(B*num_objects, v4e.shape[2],v4e.shape[3],v4e.shape[4])
+
+        # memory select kv: (B*no, C, T, H, W)
+        m4, viz = self.Memory(
+            keys[:,1:num_objects+1].view(B*num_objects, keydim, T, H, W),
+            values[:,1:num_objects+1].view(B*num_objects, valuedim, T, H, W),
+            k4e,
+            v4e
+        )
+        logits = self.Decoder(m4)
+        ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
+        #ps = indipendant possibility to belong to each object
+        
+        logit = self.Soft_aggregation(ps, K)[0] # B*K, H, W
+
+        # recover from batch B, K, h_, w_
+        logit = logit.view(B, K, logit.shape[1], logit.shape[2])
+
+        if pad[2]+pad[3] > 0:
+            logit = logit[:,:,pad[2]:-pad[3],:]
+        if pad[0]+pad[1] > 0:
+            logit = logit[:,:,:,pad[0]:-pad[1]]
+
+        return logit
