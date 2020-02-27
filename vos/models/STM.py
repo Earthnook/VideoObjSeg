@@ -113,7 +113,7 @@ class Encoder_Q(nn.Module):
         return r4, r3, r2, c1, f
     
     def train(self, mode= True):
-        super(Encoder_M, self).train(mode= mode)
+        super(Encoder_Q, self).train(mode= mode)
         # disable all self's bn layer
         self.bn1.eval()
 

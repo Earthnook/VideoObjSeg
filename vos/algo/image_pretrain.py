@@ -180,7 +180,7 @@ class ImagePretrainAlgo(AlgoBase):
 
         return dict(IoU= IoU, contour_acc= contour_acc)
         
-    def pretrain(self, epoch_i, data):
+    def pretrain(self, optim_i, data):
         """ As the paper described, pretrain on images is the first stage.
         @ Args:
             data: a dictionary with following keys
@@ -217,7 +217,7 @@ class ImagePretrainAlgo(AlgoBase):
                 n_objects= data["n_objects"]
             )
 
-    def train(self, epoch_i, data):
+    def train(self, optim_i, data):
         """
         @ Args:
             data: a dictionary with following keys
@@ -253,7 +253,7 @@ class ImagePretrainAlgo(AlgoBase):
             )
 
 
-    def eval(self, epoch_i, data):
+    def eval(self, optim_i, data):
         """
         @ Args:
             data: a dictionary with following keys

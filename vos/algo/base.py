@@ -38,7 +38,7 @@ class AlgoBase:
         """
         return dict()
 
-    def train(self, epoch_i, data):
+    def train(self, optim_i, data):
         """ Perform one interation of optimization. Under most circumstance, it corresponding to
         one optim.step() call.
 
@@ -53,7 +53,7 @@ class AlgoBase:
         """
         raise NotImplementedError
 
-    def eval(self, epoch_i, data):
+    def eval(self, optim_i, data):
         """ Perform evaluation in terms of the given batch of data.
 
         @ Args:

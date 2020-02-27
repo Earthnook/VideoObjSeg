@@ -25,11 +25,15 @@ def get_default_config():
         frame_skip_dataset_kwargs = dict(
             n_frames= 3,
             skip_increase_interval= 50,
+            max_clips_sample= 2,
+        ),
+        random_subset_kwargs= dict(
+            subset_len= 8,
         ),
         pretrain_dataloader_kwargs= dict(
-            batch_size= 8,
+            batch_size= 4,
             shuffle= True,
-            num_workers= 8,
+            num_workers= 4,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
             batch_size= 4,
@@ -55,9 +59,10 @@ def get_default_config():
             weight_decay= 1e-3,
         ),
         runner_kwargs = dict(
-            pretrain_optim_epochs= int(1e2),
-            eval_interval= 5,
-            max_optim_epochs= int(1e2),
+            pretrain_optim_epochs= int(10),
+            eval_interval= 10,
+            log_intercal= 20, # in terms of the # of calling algo.train()
+            max_optim_epochs= int(20),
         )
     )
 

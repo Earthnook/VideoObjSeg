@@ -16,13 +16,12 @@ class RunnerBase:
             model,
             algo,
             dataloader,
-            eval_dataloader,
-            eval_interval= 10,
-                # The interval to store logs, params and do evaluation in terms of calling 
-                # algo.step()
+            eval_dataloader= None,
+            log_intercal= 50, # in terms of the # of calling algo.train()
+            eval_interval= 10, # in terms of the # of calling algo.train()
             max_optim_epochs= 1e5,
-                # The maximum number of training loops.
-                # NOTE: each train loop will go through all data in dataset ONCE.
+                # The maximum number of training epochs.
+                # NOTE: each train epoch will go through all data in dataset ONCE.
             
         ):
         save__init__args(locals())
@@ -41,8 +40,8 @@ class RunnerBase:
             cpu_affin = "UNAVAILABLE MacOS"
         logger.log(f"Runner {getattr(self, 'rank', '')} master CPU affinity: "
             f"{cpu_affin}.")
-        if self.affinity.get("master_torch_threads", None) is not None:
-            torch.set_num_threads(self.affinity["master_torch_threads"])
+        # if self.affinity.get("master_torch_threads", None) is not None:
+        #     torch.set_num_threads(self.affinity["master_torch_threads"])
         logger.log(f"Runner {getattr(self, 'rank', '')} master Torch threads: "
             f"{torch.get_num_threads()}.")
 
@@ -56,7 +55,7 @@ class RunnerBase:
         self._train_infos = {k: list() for k in self.algo.train_info_fields}
         self._eval_infos = {k: list() for k in self.algo.eval_info_fields}
 
-    def store_train_info(self, epoch_i, train_info, extra_info):
+    def store_train_info(self, itr_i, train_info, extra_info):
         """ store train_info into attribute of self
         @ Args:
             train_info: a namedtuple
@@ -66,7 +65,7 @@ class RunnerBase:
             new_v = getattr(train_info, k, [])
             v.extend(new_v if isinstance(new_v, list) else [new_v])
 
-    def store_eval_info(self, epoch_i, eval_info, extra_info):
+    def store_eval_info(self, itr_i, eval_info, extra_info):
         """ store eval_info into attribute of self
         @ Args:
             eval_info: a namedtuple
@@ -76,31 +75,31 @@ class RunnerBase:
             new_v = getattr(eval_info, k, [])
             v.extend(new_v if isinstance(new_v, list) else [new_v])
 
-    def get_epoch_snapshot(self, epoch_i):
+    def get_epoch_snapshot(self, itr_i):
         """ Collect all state needed for full checkpoint/snapshot of the training,
         including all model parameters and algorithm parameters
         """
         return dict(
-            epoch_i= epoch_i,
+            itr_i= itr_i,
             model_state_dict= self.model.state_dict(),
             algo_state_dict= self.algo.state_dict()
         )
 
-    def save_epoch_snapshot(self, epoch_i):
+    def save_epoch_snapshot(self, itr_i):
         """
         Calls the logger to save training checkpoint/snapshot (logger itself
         may or may not save, depending on mode selected).
         """
         logger.log("saving snapshot...")
-        params = self.get_epoch_snapshot(epoch_i)
-        logger.save_itr_params(epoch_i, params)
+        params = self.get_epoch_snapshot(itr_i)
+        logger.save_itr_params(itr_i, params)
         logger.log("saved")
 
-    def log_diagnostic(self, epoch_i):
+    def log_diagnostic(self, itr_i):
         """ write all informations into exact files using logging method
         """
-        self.save_epoch_snapshot(epoch_i)
-        logger.record_tabular("Epoch", epoch_i)
+        self.save_epoch_snapshot(itr_i)
+        logger.record_tabular("Optim_itr", itr_i)
 
         for k, v in self._train_infos.items():
             if not k.startswith("_"):
@@ -124,16 +123,21 @@ class RunnerBase:
         """
         self.startup()
 
+        itr_i = 0
         for epoch_i in range(self.max_optim_epochs):
             for batch_i, data in tqdm(enumerate(self.dataloader)):
-                train_info, extra_info = self.algo.train(epoch_i, data)
-                self.store_train_info(epoch_i, train_info, extra_info)
-            if not self.eval_dataset is None and epoch_i > 0 and epoch_i+1 % self.eval_interval:
-                self.model.eval()
-                for eval_data in tqdm(self.eval_dataloader):
-                    eval_info, extra_info = self.algo.eval(epoch_i, eval_data)
-                    self.store_eval_info(epoch_i, eval_info, extra_info)
-                self.model.train()
-            self.log_diagnostic(epoch_i)
+                itr_i += 1
+                train_info, extra_info = self.algo.train(itr_i, data)
+                self.store_train_info(itr_i, train_info, extra_info)
+
+                if not self.eval_dataloader is None and itr_i % self.eval_interval == 0:
+                    self.model.eval()
+                    for eval_data in tqdm(self.eval_dataloader):
+                        eval_info, extra_info = self.algo.eval(itr_i, eval_data)
+                        self.store_eval_info(itr_i, eval_info, extra_info)
+                    self.model.train()
+
+                if itr_i % self.itr_interval == 0:
+                    self.log_diagnostic(itr_i)
 
         self.shutdown()
