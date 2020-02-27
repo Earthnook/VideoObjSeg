@@ -32,9 +32,12 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         ),
         **config["frame_skip_dataset_kwargs"]
     )
-    davis_eval = DAVIS_2017_TrainVal(
-        normalize_fn= random_crop_256_CHW,
-        **config["eval_dataset_kwargs"],
+    davis_eval = FrameSkipDataset(
+        DAVIS_2017_TrainVal(
+            normalize_fn= random_crop_256_CHW,
+            **config["eval_dataset_kwargs"],
+        ),
+        **config["frame_skip_dataset_kwargs"]
     )
 
     model = DataParallel(STM())

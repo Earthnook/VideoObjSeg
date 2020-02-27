@@ -7,12 +7,19 @@ from torchvision.transforms import functional as visionF
 import torch
 from torch import nn
 from torch.nn import functional as F
+from collections import namedtuple
 import numpy as np
+
+TrainInfo = namedtuple("TrainInfo", ["loss", "gradNorm", "IoU", "contour_acc"])
+EvalInfo = namedtuple("EvalInfo", ["loss", "IoU", "contour_acc"])
 
 class ImagePretrainAlgo(AlgoBase):
     """ The algorithm re-producing STM training method
     https://arxiv.org/abs/1904.00607
     """
+    train_info_fields = tuple(f for f in TrainInfo._fields) # copy
+    eval_info_fields = tuple(f for f in EvalInfo._fields) # copy
+
     def __init__(self,
             data_augment_kwargs= dict(
                 affine_kwargs = dict(
@@ -25,6 +32,7 @@ class ImagePretrainAlgo(AlgoBase):
             ),
             clip_grad_norm= 1e9,
             loss_fn= CrossEntropyOneHot(),
+            contour_weight= 1.0,
             **kwargs,
         ):
         save__init__args(locals())
@@ -153,6 +161,24 @@ class ImagePretrainAlgo(AlgoBase):
         m_videos = torch.stack(m_videos)
         # the returned videos should be batch-wise
         return videos, m_videos
+
+    def calc_performance(self, pred, gtruth):
+        """ Given the statistics, calculate the performace in terms of object segmentation.
+        All inputs should be np.ndarray with the same shape and one-hot encoding.
+            Calculation refering to book: 
+            Pattern Recognition and Computer Vision: Second Chinese Conference, PRCV page 423
+        """
+        # calculate region similarity (a.k.a Intersection over Unit)
+        IoU = np.sum(gtruth & pred) / np.sum(gtruth | pred)
+
+        # calculate contour accuracy
+        intersect = np.sum(pred & gtruth)
+        accuracy_rate = intersect / np.sum(pred)
+        recall_rate = intersect / np.sum(gtruth)
+        contour_acc = (np.reciprocal(self.contour_weight**2) + 1) * \
+            (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate)
+
+        return dict(IoU= IoU, contour_acc= contour_acc)
         
     def pretrain(self, epoch_i, data):
         """ As the paper described, pretrain on images is the first stage.
@@ -165,7 +191,7 @@ class ImagePretrainAlgo(AlgoBase):
         videos, masks = self.synth_videos(data["image"], data["mask"])
 
         self.optim.zero_grad()
-        pred, loss = self.step(
+        preds, loss = self.step(
             frames= videos,
             masks= masks,
             n_objects= data["n_objects"],
@@ -174,11 +200,20 @@ class ImagePretrainAlgo(AlgoBase):
         loss.backward()
         grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optim.step()
+        preds = preds.cpu().numpy()
+        gtruths = masks.cpu().numpy()
 
-        return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
+        performance_status = self.calc_performance(preds, gtruths)
+
+        return TrainInfo(
+                loss= loss.detach().cpu().numpy(), 
+                gradNorm= grad_norm,
+                IoU= performance_status["IoU"],
+                contour_acc= performance_status["contour_acc"],
+            ), \
             dict(
                 videos= videos.cpu().numpy(),
-                preds= pred.cpu().numpy(),
+                preds= preds,
                 n_objects= data["n_objects"]
             )
 
@@ -191,7 +226,7 @@ class ImagePretrainAlgo(AlgoBase):
                 "n_objects": max number of objects
         """
         self.optim.zero_grad()
-        pred, loss = self.step(
+        preds, loss = self.step(
             frames= data["video"],
             masks= data["mask"],
             n_objects= data["n_objects"],
@@ -200,11 +235,20 @@ class ImagePretrainAlgo(AlgoBase):
         loss.backward()
         grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optim.step()
+        preds = preds.cpu().numpy()
+        gtruths = data["mask"]
 
-        return TrainInfo(loss= loss.detach().cpu().numpy(), gradNorm= grad_norm), \
+        performance_status = self.calc_performance(preds, gtruths)
+    
+        return TrainInfo(
+                loss= loss.detach().cpu().numpy(), 
+                gradNorm= grad_norm,
+                IoU= performance_status["IoU"],
+                contour_acc= performance_status["contour_acc"],
+            ), \
             dict(
                 videos= data["video"].cpu().numpy(),
-                preds= pred.cpu().numpy(),
+                preds= preds,
                 n_objects= data["n_objects"]
             )
 
@@ -218,15 +262,24 @@ class ImagePretrainAlgo(AlgoBase):
                 "n_objects": max number of objects
         """
         with torch.no_grad():
-            pred, loss = self.step(
+            preds, loss = self.step(
                 frames= data["video"],
                 masks= data["mask"],
                 n_objects= data["n_objects"],
                 Mem_every= 5,
             )
-        return EvalInfo(loss= loss.cpu().numpy()), \
+        preds = preds.cpu().numpy()
+        gtruths = data["mask"]
+
+        performance_status = self.calc_performance(preds, gtruths)
+
+        return EvalInfo(
+                loss= loss.cpu().numpy(),
+                IoU= performance_status["IoU"],
+                contour_acc= performance_status["contour_acc"],
+            ), \
             dict(
                 videos= data["video"].cpu().numpy(),
-                preds= pred.cpu().numpy(),
+                preds= preds,
                 n_objects= data["n_objects"]
             )
