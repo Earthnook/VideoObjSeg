@@ -2,6 +2,7 @@ from vos.utils.quick_args import save__init__args
 from vos.runner.video_mask import VideoMaskRunner
 
 from tqdm import tqdm
+import torch
 from torch.utils import data
 
 class TwoStageRunner(VideoMaskRunner):
@@ -54,5 +55,6 @@ class TwoStageRunner(VideoMaskRunner):
         """
         self.startup()
         self._pre_train()
+        torch.cuda.empty_cache()
         self._main_train()
         self.shutdown()

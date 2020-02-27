@@ -11,7 +11,7 @@ from vos.datasets.frame_skip import FrameSkipDataset
 from vos.models.STM import STM
 from vos.algo.image_pretrain import ImagePretrainAlgo
 from vos.runner.two_stage import TwoStageRunner
-from vos.utils.img_normalizer import random_crop_384_CHW, random_crop_384_HWC
+from vos.utils.img_normalizer import random_crop_256_CHW, random_crop_256_HWC
 
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
@@ -22,18 +22,18 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     # build the components for the experiment and run
     coco_train = COCO(
-        normalize_fn= random_crop_384_HWC,
+        normalize_fn= random_crop_256_HWC,
         **config["pretrain_dataset_kwargs"],
     )
     davis_train = FrameSkipDataset(
         DAVIS_2017_TrainVal(
-            normalize_fn= random_crop_384_CHW,
+            normalize_fn= random_crop_256_CHW,
             **config["train_dataset_kwargs"],
         ),
         **config["frame_skip_dataset_kwargs"]
     )
     davis_eval = DAVIS_2017_TrainVal(
-        normalize_fn= random_crop_384_CHW,
+        normalize_fn= random_crop_256_CHW,
         **config["eval_dataset_kwargs"],
     )
 

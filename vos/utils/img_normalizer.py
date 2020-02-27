@@ -104,12 +104,12 @@ def random_crop_HWC(output_size, *images):
         image[H_start:H_start+oH, W_start:W_start+oW, :] for image in images
     ]
 
-def random_crop_384_CHW(*images):
-    output_size = (384, 384)
+def random_crop_256_CHW(*images):
+    output_size = (256, 256)
     return random_crop_CHW(output_size, *images)
 
-def random_crop_384_HWC(*images):
-    output_size = (384, 384)
+def random_crop_256_HWC(*images):
+    output_size = (256, 256)
     return random_crop_HWC(output_size, *images)
 
 

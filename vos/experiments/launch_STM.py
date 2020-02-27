@@ -29,7 +29,7 @@ def get_default_config():
         pretrain_dataloader_kwargs= dict(
             batch_size= 8,
             shuffle= True,
-            num_workers= 4,
+            num_workers= 8,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
             batch_size= 4,

@@ -78,6 +78,11 @@ class Encoder_M(nn.Module):
         r3 = self.res3(r2) # 1/8, 512
         r4 = self.res4(r3) # 1/8, 1024
         return r4, r3, r2, c1, f
+    
+    def train(self, mode= True):
+        super(Encoder_M, self).train(mode= mode)
+        # disable all self's bn layer
+        self.bn1.eval()
  
 class Encoder_Q(nn.Module):
     def __init__(self):
@@ -106,6 +111,11 @@ class Encoder_Q(nn.Module):
         r3 = self.res3(r2) # 1/8, 512
         r4 = self.res4(r3) # 1/8, 1024
         return r4, r3, r2, c1, f
+    
+    def train(self, mode= True):
+        super(Encoder_M, self).train(mode= mode)
+        # disable all self's bn layer
+        self.bn1.eval()
 
 
 class Refine(nn.Module):
