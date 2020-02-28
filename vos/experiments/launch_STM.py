@@ -61,7 +61,7 @@ def get_default_config():
         runner_kwargs = dict(
             pretrain_optim_epochs= int(10),
             eval_interval= 10,
-            log_interval= 20, # in terms of the # of calling algo.train()
+            log_interval= 5, # in terms of the # of calling algo.train()
             max_optim_epochs= int(20),
         )
     )
