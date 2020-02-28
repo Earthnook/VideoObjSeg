@@ -1,7 +1,7 @@
 """ The entry point of configure and launch experiment.
 """
 from exptools.launching.variant import VariantLevel, make_variants, update_config
-from exptools.launching.affinity import encode_affinity
+from exptools.launching.affinity import encode_affinity, quick_affinity_code
 from exptools.launching.exp_launcher import run_experiments
 
 from os import path
@@ -10,6 +10,7 @@ def get_default_config():
     root_path = "/p300/videoObjSeg_dataset/"
     dataset_root_path = path.join(root_path, "DAVIS-2017-trainval-480p/")
     return dict(
+        exp_image_size= (384, 384),
         pretrain_dataset_kwargs = dict(
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
@@ -68,25 +69,36 @@ def get_default_config():
 
 def main(args):
     experiment_title = "STM_reproduction"
-    affinity_code = encode_affinity(
-        n_cpu_core= 32,
-        n_gpu= 8,
-        gpu_per_run= 1,
-        contexts_per_gpu= 1,
-    )
+    affinity_code = quick_affinity_code(n_parallel= 1)
     default_config = get_default_config()
 
     # set up variants
     variant_levels = list()
 
-    # values = [
-    #     ["hopper",],
-    #     ["pr2",],
-    #     ["walker",],
-    # ]
-    # dir_names = ["{}".format(*v) for v in values]
-    # keys = [("env", "name")]
-    # variant_levels.append(VariantLevel(keys, values, dir_names))
+    values = [
+        [45, 50, 0.4, 30],
+        # [90, 50, 2., 50],
+    ]
+    dir_names = ["total_frames{}".format(*v) for v in values]
+    keys = [
+        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "angle_max"),
+        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "translate_max"),
+        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "scale_max"),
+        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "shear_max"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        [3, 2],
+        [3, 1],
+        [2, 1],
+    ]
+    dir_names = ["shear_intense{}-{}".format(*v) for v in values]
+    keys = [
+        ("frame_skip_dataset_kwargs", "n_frames"), 
+        ("algo_kwargs", "data_augment_kwargs", "n_frames"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
 
     variants, log_dirs = make_variants(*variant_levels)
     for i, variant in enumerate(variants):
