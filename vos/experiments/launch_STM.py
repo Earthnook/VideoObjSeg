@@ -25,6 +25,10 @@ def get_default_config():
         frame_skip_dataset_kwargs = dict(
             n_frames= 3,
             skip_increase_interval= 50,
+            max_clips_sample= 2,
+        ),
+        random_subset_kwargs= dict(
+            subset_len= 16,
         ),
         pretrain_dataloader_kwargs= dict(
             batch_size= 8,
@@ -55,9 +59,10 @@ def get_default_config():
             weight_decay= 1e-3,
         ),
         runner_kwargs = dict(
-            pretrain_optim_epochs= int(1e2),
-            eval_interval= 5,
-            max_optim_epochs= int(1e2),
+            pretrain_optim_epochs= int(10),
+            eval_interval= 10,
+            log_interval= 5, # in terms of the # of calling algo.train()
+            max_optim_epochs= int(20),
         )
     )
 
@@ -88,8 +93,10 @@ def main(args):
         variants[i] = update_config(default_config, variant)
         if args.debug > 0:
             # make sure each complete iteration has gone through and easy for debug
-            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 1
+            variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 5
             variants[i]["runner_kwargs"]["max_optim_epochs"] = 5
+            variants[i]["runner_kwargs"]["eval_interval"] = 2
+            variants[i]["runner_kwargs"]["log_interval"] = 4
             variants[i]["pretrain_dataset_kwargs"]["is_subset"] = True
             variants[i]["train_dataset_kwargs"]["is_subset"] = True
             variants[i]["eval_dataset_kwargs"]["is_subset"] = True
@@ -97,7 +104,8 @@ def main(args):
             variants[i]["dataloader_kwargs"]["shuffle"] = False
             variants[i]["pretrain_dataloader_kwargs"]["num_workers"] = 0
             variants[i]["dataloader_kwargs"]["num_workers"] = 0
-
+            variants[i]["eval_dataloader_kwargs"]["num_workers"] = 0
+            
     run_experiments(
         script="vos/experiments/STM.py",
         affinity_code=affinity_code,

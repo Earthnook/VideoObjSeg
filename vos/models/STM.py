@@ -113,7 +113,7 @@ class Encoder_Q(nn.Module):
         return r4, r3, r2, c1, f
     
     def train(self, mode= True):
-        super(Encoder_M, self).train(mode= mode)
+        super(Encoder_Q, self).train(mode= mode)
         # disable all self's bn layer
         self.bn1.eval()
 
@@ -243,11 +243,13 @@ class STM(nn.Module):
         k4, v4 = self.Pad_memory([k4, v4], num_objects=num_objects, B=B, K=K)
         return k4, v4
 
-    def Soft_aggregation(self, ps, K):
-        num_objects, H, W = ps.shape
-        em = ToCuda(torch.zeros(1, K, H, W)) 
-        em[0,0] =  torch.prod(1-ps, dim=0) # bg prob
-        em[0,1:num_objects+1] = ps # obj prob
+    def Soft_aggregation(self, psb, K, B):
+        _, H, W = psb.shape
+        ps = psb.view(B, -1, H, W)
+        num_objects = ps.shape[1]
+        em = ToCuda(torch.zeros(B, K, H, W)) 
+        em[:,0] =  torch.prod(1-ps, dim=1) # bg prob
+        em[:,1:num_objects+1] = ps # obj prob
         em = torch.clamp(em, 1e-7, 1-1e-7)
         logit = torch.log((em /(1-em)))
         return logit
@@ -263,21 +265,22 @@ class STM(nn.Module):
         r4, r3, r2, _, _ = self.Encoder_Q(frame)
         k4, v4 = self.KV_Q_r4(r4)   # B, dim, H/16, W/16
 
-        # expand to ---  no, c, h, w
-        k4e, v4e = k4.expand(B, num_objects,-1,-1,-1), v4.expand(B, num_objects,-1,-1,-1) 
-        r3e, r2e = r3.expand(B, num_objects,-1,-1,-1), r2.expand(B, num_objects,-1,-1,-1)
+        # expand to ---  B, no, c, h, w
+        k4e = k4.unsqueeze(1).expand(B, num_objects,-1,-1,-1)
+        v4e = v4.unsqueeze(1).expand(B, num_objects,-1,-1,-1)
+        r3e = r3.unsqueeze(1).expand(B, num_objects,-1,-1,-1)
+        r2e = r2.unsqueeze(1).expand(B, num_objects,-1,-1,-1)
         
         # make all objects into batch
-        k4e, v4e, r3e, r2e = \
-            k4e.view(B*num_objects, k4e.shape[2],k4e.shape[3],k4e.shape[4]), \
-            v4e.view(B*num_objects, v4e.shape[2],v4e.shape[3],v4e.shape[4]), \
-            r3e.view(B*num_objects, r3e.shape[2],r3e.shape[3],r3e.shape[4]), \
-            r2e.view(B*num_objects, r2e.shape[2],r2e.shape[3],r2e.shape[4])
+        k4e = k4e.contiguous().view(B*num_objects, k4e.shape[2],k4e.shape[3],k4e.shape[4])
+        v4e = v4e.contiguous().view(B*num_objects, v4e.shape[2],v4e.shape[3],v4e.shape[4])
+        r3e = r3e.contiguous().view(B*num_objects, r3e.shape[2],r3e.shape[3],r3e.shape[4])
+        r2e = r2e.contiguous().view(B*num_objects, r2e.shape[2],r2e.shape[3],r2e.shape[4])
 
         # memory select kv: (B*no, C, T, H, W)
         m4, viz = self.Memory(
-            keys[:,1:num_objects+1].view(B*num_objects, keydim, T, H, W),
-            values[:,1:num_objects+1].view(B*num_objects, valuedim, T, H, W),
+            keys[:,1:num_objects+1].contiguous().view(B*num_objects, keydim, T, H, W),
+            values[:,1:num_objects+1].contiguous().view(B*num_objects, valuedim, T, H, W),
             k4e,
             v4e
         )
@@ -285,10 +288,8 @@ class STM(nn.Module):
         ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
         #ps = indipendant possibility to belong to each object
         
-        logit = self.Soft_aggregation(ps, K)[0] # B*K, H, W
-
-        # recover from batch B, K, h_, w_
-        logit = logit.view(B, K, logit.shape[1], logit.shape[2])
+        # Also move back to 4 dims
+        logit = self.Soft_aggregation(ps, K, B) # B, K, H, W
 
         if pad[2]+pad[3] > 0:
             logit = logit[:,:,pad[2]:-pad[3],:]

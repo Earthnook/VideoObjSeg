@@ -28,9 +28,11 @@ class FrameSkipDataset(Dataset):
         return self._max_clips_sample * self._dataset.__len__()
 
     def __getitem__(self, idx):
-        item = self._dataset.__getitem__(idx)
-        _, video = self.stack_video(item["video"])
-        b, mask = self.stack_video(item["mask"])
+        video_idx = int(idx // self._max_clips_sample)
+        sub_idx = int(idx % self._max_clips_sample)
+        item = self._dataset.__getitem__(video_idx)
+        video = self.clip_video(item["video"], sub_idx)
+        mask = self.clip_video(item["mask"], sub_idx)
 
         # record and reset
         self._num_getitems += 1
@@ -42,7 +44,7 @@ class FrameSkipDataset(Dataset):
         return dict(
             video= video,
             mask= mask,
-            n_objects= item["n_objects"].expand(b,)
+            n_objects= item["n_objects"]
         )
 
     def _choose_skip_length(self):
@@ -52,11 +54,10 @@ class FrameSkipDataset(Dataset):
             (self._full_dataset_view // self._skip_increase_interval))
         self._skip_length = 0 if max_length == 0 else randint(0, max_length)
 
-    def stack_video(self, video):
-        """ stack a list of torch.Tensor videos into a batch of data, by sampling from them.
+    def clip_video(self, video, idx):
+        """ clip a torch.Tensor video by sampling from them.
         """
         # assuming each item is a tensor.Tensor with shape (t, C, H, W)
-        samples = []
         T = video.shape[0]
             # +-----------------------------------+
             # |... ... ... ...     F    F    F    F
@@ -64,15 +65,13 @@ class FrameSkipDataset(Dataset):
             #                      |    A clip    |
             #                      +--------------+
         n_clips = T - (self._n_frames-1) * (self._skip_length+1)
-        for clip_i in range(n_clips):
-            if self._n_frames == 1:
-                idxs = slice(clip_i, clip_i+1)
-            else:
-                idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1), (self._skip_length+1))
-            samples.extend([video[idxs]])
-            if clip_i+1 >= self._max_clips_sample: break
-        b = len(samples)
-        return b, torch.stack(samples, 0) # (b, t, C, H, W)
+
+        clip_i = min(idx, n_clips-1)
+        if self._n_frames == 1:
+            idxs = slice(clip_i, clip_i+1)
+        else:
+            idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1), (self._skip_length+1))
+        return video[idxs] # (t, C, H, W)
 
     @staticmethod
     def collate_fn(batch: list):
@@ -85,6 +84,6 @@ class FrameSkipDataset(Dataset):
                 b_[k].extend([item[k]])
 
         for k in b_.keys():
-            b_[k] = torch.cat(b_[k], dim= 0)
+            b_[k] = torch.cat(b_[k], dim= 0).contiguous()
 
         return b_

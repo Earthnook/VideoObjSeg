@@ -128,7 +128,7 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
         # both Fs and Ms are in shape (t, n, H, W)
         return dict(
             video= Fs,
-            mask= Ms,
+            mask= Ms.to(dtype= torch.uint8),
             n_objects= n_objects,
         )
 

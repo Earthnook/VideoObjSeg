@@ -11,13 +11,13 @@ class VideoMaskRunner(RunnerBase):
         videos: numpy.ndarray with shape (b, t, C, H, W)
         preds: numpy.ndarray with shape (b, t, n, H, W) with one-hot encoding
     """
-    def _store_extra_info(self, epoch_i, extra_info, n_select_frames= 1):
+    def _store_extra_info(self, itr_i, extra_info, n_select_frames= 1):
         """ For the memory efficiency, this will only randomly choose `n_select_frames` of frames
         to store.
         """
         if not hasattr(self, "_extra_infos"):
             # a hacky way of initialization
-            self._extra_infos = []
+            self._extra_infos = {k: list() for k in ["images", "preds", "reuslts"]}
 
         videos = extra_info["videos"]
         preds = extra_info["preds"]
@@ -33,17 +33,25 @@ class VideoMaskRunner(RunnerBase):
         images = videos.reshape((-1, C, H, W))
         preds = preds.reshape((-1, n, H, W))
 
-        masked_images = overlay_images(images, preds)
-        self._extra_infos.extend([image for image in masked_images])
+        masked_images = overlay_images(images, preds, alpha= 0.2)
+        self._extra_infos["images"].extend([image for image in masked_images])
+        self._extra_infos["preds"].extend([image for image in masked_images])
+        self._extra_infos["results"].extend([image for image in masked_images])
 
-    def _log_extra_info(self, epoch_i):
+    def _log_extra_info(self, itr_i):
         # transpose from (b, C, H, W) to (b, H, W, C)
-        images = np.stack(self._extra_infos, axis= 0).transpose(0,2,3,1)
+        images = np.stack(self._extra_infos["images"], axis= 0).transpose(0,2,3,1)
+        results = np.stack(self._extra_infos["results"], axis= 0).transpose(0,2,3,1)
+        # due to multi-channel, preds are a bit different
+        preds = [np.hstack(x[:]) for x in self._extra_infos["preds"]] # a list of (H, C*W)
+        preds = np.stack(preds, axis= 0).transpose(0,2,3,1)
 
         # write to summary file
-        tf_image_summary("predict masks", data=images, step= epoch_i)
+        tf_image_summary("input images", data=images, step= itr_i)
+        tf_image_summary("predictions", data= preds, step= itr_i)
+        tf_image_summary("masked images", data= results, step= itr_i)
 
         # reset
         del self._extra_infos
-        self._extra_infos = []
+        self._extra_infos = {k: list() for k in ["images", "preds", "reuslts"]}
         
