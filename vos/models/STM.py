@@ -256,8 +256,7 @@ class STM(nn.Module):
 
     def segment(self, frame, keys, values, num_objects): 
         # if num_objects == 0, treat as 1 object
-        # num_objects = max(num_objects.max().item(), 1)
-        num_objects = num_objects.max()
+        num_objects = max(num_objects.max().item(), 1)
         B, K, keydim, T, H, W = keys.shape # B nope= 1
         B, K, valuedim, _, _, _ = values.shape
         # pad
