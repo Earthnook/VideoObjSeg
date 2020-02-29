@@ -6,7 +6,6 @@ from pycocotools.coco import COCO as COCOapi
 
 import os.path as path
 import skimage.io as io
-from skimage.transform import resize
 import numpy as np
 
 SUBSET_LEN = 50
@@ -15,18 +14,12 @@ class COCO(data.Dataset):
     def __init__(self, root,
             mode= "train", # choose between "train", "val"
             is_subset= False, # If is subset, the length will be a fixed small length
-            normalize_fn= None, # A np.array method telling how to make sure all frames are in the
-                # same resolution, input is a sequence of torch.Tensors with shape (H, W, ?)
             max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
         ):
         self._root = root
         self._mode = mode
         self._is_subset = is_subset
         self._max_n_objects = max_n_objects
-        if normalize_fn is None:
-            self._normalize_fn = self.default_normalize_fn
-        else:
-            self._normalize_fn = normalize_fn
 
         self.coco = COCOapi(
             path.join(self._root, "annotations/instances_{}2017.json".format(self._mode))
@@ -85,15 +78,6 @@ class COCO(data.Dataset):
                     catIds= self.coco.getCatIds(catNms= catNms)
                 )
 
-    @staticmethod
-    def default_normalize_fn(*images):
-        """ Input image should follow numpy convention, which has shape (H, W, C)
-        """
-        image_size = (256, 256)
-        return [
-            resize(i, image_size) for i in images
-        ]
-
     def __len__(self):
         if self._is_subset:
             return SUBSET_LEN
@@ -131,11 +115,6 @@ class COCO(data.Dataset):
             """ Because of the multi-object tracking problem, there is no need to assign to
             specific index.
             """
-            # cat = [cat for cat in self._cats if cat["id"] == ann["category_id"]][0]
-            # if self._output_mode["is_supcats"]:
-            #     msk_idx = [i for i, name in enumerate(self._supNms) if name == cat["supercategory"]][0]
-            # else:
-            #     msk_idx = [i for i, name in enumerate(self._catNms) if name == cat["name"]][0]
             if n_objects >= self._max_n_objects: break
             ann_mask = self.coco.annToMask(ann)
             mask[:, :, ann_i] |= ann_mask
@@ -144,14 +123,14 @@ class COCO(data.Dataset):
         mask = np.concatenate([bg, mask], axis= 2)
 
         # make the output with dimension order: (C, H, W)
-        image, mask = self._normalize_fn(image, mask)
+        # NOTE: each data might not have the same resolution
         image = image.transpose(2,0,1).astype(np.float32) / 255
         mask = mask.transpose(2,0,1).astype(np.uint8)
         return dict(
-            image= image, # pixel in [0, 1] scale
-            mask= mask, # NOTE: 0-th dimension of mask is (n_cats+1), 
+            image= torch.from_numpy(image), # pixel in [0, 1] scale
+            mask= torch.from_numpy(mask), # NOTE: 0-th dimension of mask is (n_cats+1), 
                 # the order of the mas depends on self._supNms or self._catNms
-            n_objects= n_objects,
+            n_objects= torch.Tensor(n_objects),
         )
 
 if __name__ == "__main__":

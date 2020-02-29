@@ -23,6 +23,17 @@ def get_default_config():
             root= dataset_root_path,
             mode= "val"
         ),
+        videosynth_dataset_kwargs = dict(
+            n_frames= 3,
+            resolution= (384, 384),
+            resize_method= "crop",
+            affine_kwargs= dict(
+                angle_max= 90.,
+                translate_max= 50.,
+                scale_max= 2.,
+                shear_max= 50.,
+            ),
+        ),
         frame_skip_dataset_kwargs = dict(
             n_frames= 3,
             skip_increase_interval= 50,
@@ -46,15 +57,6 @@ def get_default_config():
             num_workers= 4,
         ), # for a customized DataLoader
         algo_kwargs = dict(
-            data_augment_kwargs= dict(
-                affine_kwargs= dict(
-                    angle_max= 90.,
-                    translate_max= 50.,
-                    scale_max= 2.,
-                    shear_max= 50.,
-                ),
-                n_frames= 2,
-            ),
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
             weight_decay= 0,
@@ -84,10 +86,10 @@ def main(args):
     ]
     dir_names = ["affine{}-{}-{}-{}".format(*v) for v in values]
     keys = [
-        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "angle_max"),
-        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "translate_max"),
-        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "scale_max"),
-        ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "shear_max"),
+        ("videosynth_dataset_kwargs", "affine_kwargs", "angle_max"),
+        ("videosynth_dataset_kwargs", "affine_kwargs", "translate_max"),
+        ("videosynth_dataset_kwargs", "affine_kwargs", "scale_max"),
+        ("videosynth_dataset_kwargs", "affine_kwargs", "shear_max"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
@@ -99,7 +101,7 @@ def main(args):
     dir_names = ["total_frane{}-{}".format(*v) for v in values]
     keys = [
         ("frame_skip_dataset_kwargs", "n_frames"), 
-        ("algo_kwargs", "data_augment_kwargs", "n_frames"),
+        ("videosynth_dataset_kwargs", "n_frames"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from numpy.random import randint
 
 from vos.utils.quick_args import save__init__args
+from vos.utils.image_shaper import random_crop
 
 class FrameSkipDataset(Dataset):
     """ This is a wrapper that designed as firstly STM requested to sample training frames.
@@ -17,35 +18,14 @@ class FrameSkipDataset(Dataset):
             skip_increase_interval= 1, # how many rounds of all data before one step if increase.
             max_clips_sample= 2, # Due memory limitation, sample all clips from one video might 
                 # even explode all the cuda memory.
+            resolution= (384, 384), # control the output of the image, to make a batch
+            resize_method= "crop", # choose between "crop", "resize"
         ):
         save__init__args(locals(), underscore= True)
         # As curriculum learning, these surve as counters
         self._num_getitems = 0
         self._full_dataset_view = 0
         self._choose_skip_length()
-
-    def __len__(self):
-        return self._max_clips_sample * self._dataset.__len__()
-
-    def __getitem__(self, idx):
-        video_idx = int(idx // self._max_clips_sample)
-        sub_idx = int(idx % self._max_clips_sample)
-        item = self._dataset.__getitem__(video_idx)
-        video = self.clip_video(item["video"], sub_idx)
-        mask = self.clip_video(item["mask"], sub_idx)
-
-        # record and reset
-        self._num_getitems += 1
-        if self._num_getitems == self.__len__():
-            self._full_dataset_view += 1
-            self._num_getitems = 0
-        self._choose_skip_length()
-        
-        return dict(
-            video= video,
-            mask= mask,
-            n_objects= item["n_objects"]
-        )
 
     def _choose_skip_length(self):
         """ Choose a skip length that can be utilized in one data collection
@@ -73,17 +53,32 @@ class FrameSkipDataset(Dataset):
             idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1), (self._skip_length+1))
         return video[idxs] # (t, C, H, W)
 
-    @staticmethod
-    def collate_fn(batch: list):
-        """ Do provide this function to the dataloader, 
-        argument name is the same as this function name
-        """
-        b_ = {k: list() for k in batch[0].keys()}
-        for item in batch:
-            for k in item.keys():
-                b_[k].extend([item[k]])
+    def __len__(self):
+        return self._max_clips_sample * self._dataset.__len__()
 
-        for k in b_.keys():
-            b_[k] = torch.cat(b_[k], dim= 0).contiguous()
+    def __getitem__(self, idx):
+        video_idx = int(idx // self._max_clips_sample)
+        sub_idx = int(idx % self._max_clips_sample)
+        item = self._dataset.__getitem__(video_idx)
+        video = self.clip_video(item["video"], sub_idx)
+        mask = self.clip_video(item["mask"], sub_idx)
 
-        return b_
+        if self.resize_method == "crop":
+            video, mask = random_crop(self.resolution, video, mask)
+        elif self.resize_method == "resize":
+            raise NotImplementedError # put here for later implementation
+        else:
+            raise NotImplementedError
+
+        # record and reset
+        self._num_getitems += 1
+        if self._num_getitems >= self.__len__():
+            self._full_dataset_view += 1
+            self._num_getitems = 0
+        self._choose_skip_length()
+        
+        return dict(
+            video= video,
+            mask= mask,
+            n_objects= item["n_objects"]
+        )

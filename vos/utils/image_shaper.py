@@ -103,14 +103,3 @@ def random_crop_HWC(output_size, *images):
     return [
         image[H_start:H_start+oH, W_start:W_start+oW, :] for image in images
     ]
-
-def crop_CHW_maker(output_size):
-    def fn(*images):
-        return random_crop_CHW(output_size, *images)
-    return fn
-    
-def crop_HWC_maker(output_size):
-    def fn(*images):
-        return random_crop_HWC(output_size, *images)
-    return fn
-    
