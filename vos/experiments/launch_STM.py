@@ -57,13 +57,15 @@ def get_default_config():
             ),
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
-            weight_decay= 1e-3,
+            weight_decay= 0,
         ),
         runner_kwargs = dict(
             pretrain_optim_epochs= int(10),
+            max_optim_epochs= int(20),
             eval_interval= 10,
             log_interval= 5, # in terms of the # of calling algo.train()
-            max_optim_epochs= int(20),
+            max_predata_see= int(8e3), # might make the training stop before reaching max_optim_epochs
+            max_data_see= int(1e3),
         )
     )
 
@@ -76,10 +78,11 @@ def main(args):
     variant_levels = list()
 
     values = [
-        [45, 50, 0.4, 30],
+        [30, 50, 0.1, 20]
+        # [45, 50, 0.4, 30],
         # [90, 50, 2., 50],
     ]
-    dir_names = ["total_frames{}".format(*v) for v in values]
+    dir_names = ["affine{}-{}-{}-{}".format(*v) for v in values]
     keys = [
         ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "angle_max"),
         ("algo_kwargs", "data_augment_kwargs", "affine_kwargs", "translate_max"),
@@ -93,7 +96,7 @@ def main(args):
         [3, 1],
         [2, 1],
     ]
-    dir_names = ["shear_intense{}-{}".format(*v) for v in values]
+    dir_names = ["total_frane{}-{}".format(*v) for v in values]
     keys = [
         ("frame_skip_dataset_kwargs", "n_frames"), 
         ("algo_kwargs", "data_augment_kwargs", "n_frames"),

@@ -15,6 +15,9 @@ class TwoStageRunner(VideoMaskRunner):
     def __init__(self,
             pretrain_optim_epochs,
             pretrain_dataloader,
+            max_predata_see= None,
+            max_data_see= None, # if the dataset is too large, use these to limit the number of 
+                                # iterations
             **kwargs
         ):
         save__init__args(locals())
@@ -39,7 +42,7 @@ class TwoStageRunner(VideoMaskRunner):
                 itr_i += 1
                 train_info, extra_info = self.algo.pretrain(itr_i, data)
                 self.store_train_info(itr_i, train_info, extra_info)
-
+                
                 if not self.eval_dataloader is None and itr_i % self.eval_interval == 0:
                     self.model.eval()
                     for eval_data in tqdm(self.eval_dataloader):
@@ -49,6 +52,8 @@ class TwoStageRunner(VideoMaskRunner):
                 
                 if itr_i % self.log_interval == 0:
                     self.log_diagnostic(itr_i)
+                if self.max_pretrain_itr is not None and itr_i >= self.max_pretrain_itr:
+                    return
 
     def _main_train(self):
         itr_i = 0
@@ -57,6 +62,7 @@ class TwoStageRunner(VideoMaskRunner):
                 itr_i += 1
                 train_info, extra_info = self.algo.train(itr_i, data)
                 self.store_train_info(itr_i, train_info, extra_info)
+
                 if not self.eval_dataloader is None and itr_i % self.eval_interval == 0:
                     self.model.eval()
                     for eval_data in tqdm(self.eval_dataloader):
@@ -66,6 +72,21 @@ class TwoStageRunner(VideoMaskRunner):
                     
                 if itr_i % self.log_interval == 0:
                     self.log_diagnostic(itr_i)
+                if self.max_train_itr is not None and itr_i >= self.max_train_itr:
+                    return
+
+    def startup(self):
+        if self.max_predata_see is not None \
+            and self.max_predata_see < len(self.pretrain_dataloader) * self.pretrain_optim_epochs:
+            self.max_pretrain_itr = self.max_predata_see // self.pretrain_dataloader.batch_size
+        else:
+            self.max_pretrain_itr = None
+        if self.max_data_see is not None \
+            and self.max_data_see < len(self.dataloader) * self.max_optim_epochs:
+            self.max_train_itr = self.max_data_see // self.dataloader.batch_size
+        else:
+            self.max_train_itr = None
+        super(TwoStageRunner, self).startup()
 
     def train(self):
         """ one more image dataset to pre-train the network
