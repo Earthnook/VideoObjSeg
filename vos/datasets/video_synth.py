@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.transforms import functional as visionF
+import numpy as np
 
 from vos.utils.quick_args import save__init__args
 from vos.utils.image_shaper import random_crop_CHW
@@ -22,6 +23,8 @@ class VideoSynthDataset(Dataset):
             ), # a dict of kwargs providing for torchvision.transforms.functional.affine
         ):
         save__init__args(locals())
+        self.to_pil_image = transforms.ToPILImage()
+        self.to_tensor = transforms.ToTensor()
 
     def random_transforms(self, image, mask):
         """ randomly generate a transform arguments, and apply it to both image and mask.
@@ -29,7 +32,7 @@ class VideoSynthDataset(Dataset):
         some meanuvers to do with mask.
             NOTE: both arguments are torh.Tensor
         """
-        affine_ranges = self.data_augment_kwargs["affine_kwargs"]
+        affine_ranges = self.affine_kwargs
         # NOTE: np.random.uniform generates value for this dictionary
         affine_kwargs = dict(
             angle = np.random.uniform(
@@ -75,7 +78,7 @@ class VideoSynthDataset(Dataset):
         with torch.no_grad():
             for image, mask in zip(images, masks):
                 video, m_video = [image], [mask]
-                for frame_i in range(self.data_augment_kwargs["n_frames"]):
+                for frame_i in range(self.n_frames):
                     frame, m_frame = self.random_transforms(image, mask)
                     video.append(frame)
                     m_video.append(m_frame)
@@ -105,6 +108,7 @@ class VideoSynthDataset(Dataset):
         else:
             raise NotImplementedError
 
+        img.pop("image")
         img["video"] = video
         img["mask"] = m_video
         return img

@@ -13,7 +13,7 @@ import numpy as np
 TrainInfo = namedtuple("TrainInfo", ["loss", "gradNorm", "IoU", "contour_acc"])
 EvalInfo = namedtuple("EvalInfo", ["loss", "IoU", "contour_acc"])
 
-class ImagePretrainAlgo(AlgoBase):
+class VideoObjSegAlgo(AlgoBase):
     """ The algorithm re-producing STM training method
     https://arxiv.org/abs/1904.00607
     """
@@ -27,10 +27,7 @@ class ImagePretrainAlgo(AlgoBase):
             **kwargs,
         ):
         save__init__args(locals())
-        super(ImagePretrainAlgo, self).__init__(loss_fn= loss_fn, **kwargs)
-
-        self.to_pil_image = transforms.ToPILImage()
-        self.to_tensor = transforms.ToTensor()
+        super(VideoObjSegAlgo, self).__init__(loss_fn= loss_fn, **kwargs)
 
     def step(self,
             frames: torch.Tensor,

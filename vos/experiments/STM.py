@@ -11,7 +11,7 @@ from vos.datasets.video_synth import VideoSynthDataset
 from vos.datasets.frame_skip import FrameSkipDataset
 from vos.datasets.random_subset import RandomSubset
 from vos.models.STM import STM
-from vos.algo.image_pretrain import ImagePretrainAlgo
+from vos.algo.videoobjseg import VideoObjSegAlgo
 from vos.runner.two_stage import TwoStageRunner
 
 from torch.nn import DataParallel
@@ -42,7 +42,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     model = DataParallel(STM())
 
-    algo = ImagePretrainAlgo(**config["algo_kwargs"])
+    algo = VideoObjSegAlgo(**config["algo_kwargs"])
 
     runner = TwoStageRunner(
         affinity= affinity,

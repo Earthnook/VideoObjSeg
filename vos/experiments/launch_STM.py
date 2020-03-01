@@ -43,9 +43,9 @@ def get_default_config():
             subset_len= 16,
         ),
         pretrain_dataloader_kwargs= dict(
-            batch_size= 8,
+            batch_size= 4,
             shuffle= True,
-            num_workers= 8,
+            num_workers= 4,
         ), # for torch DataLoader
         dataloader_kwargs= dict(
             batch_size= 4,
@@ -94,7 +94,7 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [3, 2],
+        # [3, 2],
         [3, 1],
         [2, 1],
     ]
@@ -102,6 +102,17 @@ def main(args):
     keys = [
         ("frame_skip_dataset_kwargs", "n_frames"), 
         ("videosynth_dataset_kwargs", "n_frames"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        # [8, 8],
+        [4, 4],
+    ]
+    dir_names = ["batchsize{}-{}".format(*v) for v in values]
+    keys = [
+        ("pretrain_dataloader_kwargs", "batch_size"), 
+        ("pretrain_dataloader_kwargs", "num_workers"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
