@@ -133,9 +133,9 @@ class Refine(nn.Module):
         return m
 
 class Decoder(nn.Module):
-    def __init__(self, mdim):
+    def __init__(self, in_channels, mdim):
         super(Decoder, self).__init__()
-        self.convFM = nn.Conv2d(1024, mdim, kernel_size=(3,3), padding=(1,1), stride=1)
+        self.convFM = nn.Conv2d(in_channels, mdim, kernel_size=(3,3), padding=(1,1), stride=1)
         self.ResMM = ResBlock(mdim, mdim)
         self.RF3 = Refine(512, mdim) # 1/8 -> 1/4
         self.RF2 = Refine(256, mdim) # 1/4 -> 1
@@ -202,7 +202,7 @@ class STM(nn.Module):
         self.KV_Q_r4 = KeyValue(1024, keydim=128, valdim=512)
 
         self.Memory = Memory()
-        self.Decoder = Decoder(256)
+        self.Decoder = Decoder(1024, 256)
  
     def Pad_memory(self, mems, num_objects, B, K):
         pad_mems = []
