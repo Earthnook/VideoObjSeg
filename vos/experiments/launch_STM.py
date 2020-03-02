@@ -66,8 +66,8 @@ def get_default_config():
             max_optim_epochs= int(20),
             eval_interval= 10,
             log_interval= 5, # in terms of the # of calling algo.train()
-            max_predata_see= int(8e3), # might make the training stop before reaching max_optim_epochs
-            max_data_see= int(1e3),
+            max_predata_see= int(8e4), # might make the training stop before reaching max_optim_epochs
+            max_data_see= int(4e4),
         )
     )
 
@@ -80,7 +80,9 @@ def main(args):
     variant_levels = list()
 
     values = [
-        [30, 50, 0.1, 20]
+        [15, 15, 0.08, 10],
+        # [30, 30, 0.1, 10],
+        # [30, 50, 0.1, 20]
         # [45, 50, 0.4, 30],
         # [90, 50, 2., 50],
     ]
@@ -94,9 +96,9 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [3, 2],
+        [3, 2],
         [3, 1],
-        [2, 1],
+        # [2, 1],
     ]
     dir_names = ["total_frane{}-{}".format(*v) for v in values]
     keys = [
