@@ -7,12 +7,12 @@ from exptools.logging.context import logger_context
 
 from vos.datasets.COCO import COCO
 from vos.datasets.DAVIS import DAVIS_2017_TrainVal
+from vos.datasets.video_synth import VideoSynthDataset
 from vos.datasets.frame_skip import FrameSkipDataset
 from vos.datasets.random_subset import RandomSubset
 from vos.models.STM import STM
-from vos.algo.image_pretrain import ImagePretrainAlgo
+from vos.algo.videoobjseg import VideoObjSegAlgo
 from vos.runner.two_stage import TwoStageRunner
-from vos.utils.img_normalizer import random_crop_256_CHW, random_crop_256_HWC
 
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
@@ -22,23 +22,19 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     config = load_variant(log_dir)
 
     # build the components for the experiment and run
-    coco_train = COCO(
-        normalize_fn= random_crop_256_HWC,
-        **config["pretrain_dataset_kwargs"],
+    coco_train = VideoSynthDataset(
+        COCO(**config["pretrain_dataset_kwargs"]),
+        **config["videosynth_dataset_kwargs"],
     )
     davis_train = FrameSkipDataset(
         DAVIS_2017_TrainVal(
-            normalize_fn= random_crop_256_CHW,
             **config["train_dataset_kwargs"],
         ),
         **config["frame_skip_dataset_kwargs"]
     )
     davis_eval = RandomSubset(
         FrameSkipDataset(
-            DAVIS_2017_TrainVal(
-                normalize_fn= random_crop_256_CHW,
-                **config["eval_dataset_kwargs"],
-            ),
+            DAVIS_2017_TrainVal(**config["eval_dataset_kwargs"]),
             **config["frame_skip_dataset_kwargs"]
         ),
         **config["random_subset_kwargs"]
@@ -46,7 +42,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     model = DataParallel(STM())
 
-    algo = ImagePretrainAlgo(**config["algo_kwargs"])
+    algo = VideoObjSegAlgo(**config["algo_kwargs"])
 
     runner = TwoStageRunner(
         affinity= affinity,

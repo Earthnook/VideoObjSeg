@@ -17,7 +17,7 @@ class VideoMaskRunner(RunnerBase):
         """
         if not hasattr(self, "_extra_infos"):
             # a hacky way of initialization
-            self._extra_infos = {k: list() for k in ["images", "preds", "reuslts"]}
+            self._extra_infos = {k: list() for k in ["images", "preds", "results"]}
 
         videos = extra_info["videos"]
         preds = extra_info["preds"]
@@ -34,8 +34,8 @@ class VideoMaskRunner(RunnerBase):
         preds = preds.reshape((-1, n, H, W))
 
         masked_images = overlay_images(images, preds, alpha= 0.2)
-        self._extra_infos["images"].extend([image for image in masked_images])
-        self._extra_infos["preds"].extend([image for image in masked_images])
+        self._extra_infos["images"].extend([image for image in images])
+        self._extra_infos["preds"].extend([image for image in preds])
         self._extra_infos["results"].extend([image for image in masked_images])
 
     def _log_extra_info(self, itr_i):
@@ -43,15 +43,16 @@ class VideoMaskRunner(RunnerBase):
         images = np.stack(self._extra_infos["images"], axis= 0).transpose(0,2,3,1)
         results = np.stack(self._extra_infos["results"], axis= 0).transpose(0,2,3,1)
         # due to multi-channel, preds are a bit different
-        preds = [np.hstack(x[:]) for x in self._extra_infos["preds"]] # a list of (H, C*W)
-        preds = np.stack(preds, axis= 0).transpose(0,2,3,1)
+        preds = [np.expand_dims(np.hstack(x[:]), axis= 2) \
+            for x in self._extra_infos["preds"]] # a list of (H, n*W, 1)
 
         # write to summary file
         tf_image_summary("input images", data=images, step= itr_i)
-        tf_image_summary("predictions", data= preds, step= itr_i)
+        for pred in preds:
+            tf_image_summary("predictions", data= np.expand_dims(pred, axis= 0), step= itr_i)
         tf_image_summary("masked images", data= results, step= itr_i)
 
         # reset
         del self._extra_infos
-        self._extra_infos = {k: list() for k in ["images", "preds", "reuslts"]}
+        self._extra_infos = {k: list() for k in ["images", "preds", "results"]}
         

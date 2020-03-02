@@ -13,13 +13,13 @@ def ramdom_padding_CHW(output_size, *images):
     shape_len = len(images[0].shape)
     assert oH > H or oW > W
 
-    p_up = np.random.randint(oH - H)
+    p_up = np.random.randint(oH - H + 1)
     p_down = oH - H - p_up
-    p_left = np.random.randint(oW - W)
+    p_left = np.random.randint(oW - W + 1)
     p_right = oW - W - p_left
 
     if isinstance(images[0], torch.Tensor):
-        pad = [0, 0] * (shape_len - 2) + [p_up, p_down, p_left, p_right]
+        pad = (p_left, p_right, p_up, p_down)
         return [
             F.pad(image, tuple(pad)) for image in images
         ]
@@ -45,7 +45,7 @@ def ramdom_padding_HWC(output_size, *images):
     p_right = oW - W - p_left
 
     if isinstance(images[0], torch.Tensor):
-        pad = [p_up, p_down, p_left, p_right, 0, 0]
+        pad = (p_left, p_right, p_up, p_down)
         return [
             F.pad(image, tuple(pad)) for image in images
         ]
@@ -103,14 +103,3 @@ def random_crop_HWC(output_size, *images):
     return [
         image[H_start:H_start+oH, W_start:W_start+oW, :] for image in images
     ]
-
-def random_crop_256_CHW(*images):
-    output_size = (256, 256)
-    return random_crop_CHW(output_size, *images)
-
-def random_crop_256_HWC(*images):
-    output_size = (256, 256)
-    return random_crop_HWC(output_size, *images)
-
-
-    
