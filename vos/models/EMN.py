@@ -1,4 +1,5 @@
 from vos.models import STM
+from vos.models.correlation import conv2d_dw_corr
 from vos.utils.helpers import pad_divide_by
 
 import torch
@@ -6,16 +7,21 @@ from torch import nn
 from torch.nn import functional as F
 
 class SiamQueryEncoder(nn.Module):
-    """ Siamese query encoder
+    """ Siamese query encoder.
+    Considering saving the memory, expand operation will be done here.
+        And all output tensors will have leading dim (b*no, )
     """
     def __init__(self):
         super(SiamQueryEncoder, self).__init__()
 
-    def forward(self, in_f, init_object):
+    def forward(self, in_f, target_image):
         """
         @ Args:
             frame: torch.Tensor with shape (b, C, H, W)
-            init_object: torch.Tensor with shape (b, C, h, w) which is a cropped image
+            target_image: torch.Tensor with shape (b, no, C, h, w) which is a cropped image
+        @ Returns:
+            feat: torch.Tensor with shape (b*no, c, h, w)
+            other tensors are also with (b*no) as leading dimension
         """
 
         # calculating feature from query image
@@ -29,7 +35,13 @@ class SiamQueryEncoder(nn.Module):
         r4 = self.res4(r3) # 1/8, 1024
 
         # calculating feature from cropped target image
-        f_tar = (init_object - self.mean) / self.std
+        b, no = target_image.shape[:2]
+        target_image = target_image.view(b*no,
+            target_image.shape[2],
+            target_image.shape[3],
+            target_image.shape[4]
+        )
+        f_tar = (target_image - self.mean) / self.std
         x_tar = self.conv1(f_tar) 
         x_tar = self.bn1(x_tar)
         c1_tar = self.relu(x_tar)   # 1/2, 64
@@ -38,9 +50,17 @@ class SiamQueryEncoder(nn.Module):
         r3_tar = self.res3(r2_tar) # 1/8, 512
         r4_tar = self.res4(r3_tar) # 1/8, 1024
 
-        feat = F.conv2d(r4, r4_tar)
+        # make output tensors with leading dim (b*no,)
+        r4e = r4.unsqueeze(1).expand(b, no,-1,-1,-1)
+        r3e = r3.unsqueeze(1).expand(b, no,-1,-1,-1)
+        r2e = r2.unsqueeze(1).expand(b, no,-1,-1,-1)
+        r4e = r4e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
+        r3e = r3e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
+        r2e = r2e.contiguous().view(b*no, r2e.shape[2],r2e.shape[3],r2e.shape[4])
 
-        return feat
+        feat = conv2d_dw_corr(r4, r4_tar)
+
+        return feat, r3, r2
 
 class conv2DBatchNormRelu(nn.Module):
     """ Code copied from
@@ -186,4 +206,35 @@ class EMN(STM.STM):
         self.Encoder_Q = SiamQueryEncoder()
         self.Decoder = Decoder(1024, 256)
 
-    # all the other process should be the same as orginal STM
+    def segment(self, frame, keys, values, num_objects, target_image):
+        # if num_objects == 0, treat as 1 object
+        num_objects = max(num_objects.max().item(), 1)
+        B, K, keydim, T, H, W = keys.shape # B nope= 1
+        B, K, valuedim, _, _, _ = values.shape
+        # pad
+        [frame], pad = pad_divide_by([frame], 16, (frame.size()[2], frame.size()[3]))
+        # now target_image has shape (B, no, C, ..., ...)
+
+        r4e, r3e, r2e = self.Encoder_Q(frame, target_image) # B*no, dim, ...
+        k4e, v4e = self.KV_Q_r4(r4e)   # B*no, dim, H/16, W/16
+
+        # memory select kv: (B*no, C, T, H, W)
+        m4, viz = self.Memory(
+            keys[:,1:num_objects+1].contiguous().view(B*num_objects, keydim, T, H, W),
+            values[:,1:num_objects+1].contiguous().view(B*num_objects, valuedim, T, H, W),
+            k4e,
+            v4e
+        )
+        logits = self.Decoder(m4, r3e, r2e)
+        ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
+        #ps = indipendant possibility to belong to each object
+        
+        # Also move back to 4 dims
+        logit = self.Soft_aggregation(ps, K, B) # B, K, H, W
+
+        if pad[2]+pad[3] > 0:
+            logit = logit[:,:,pad[2]:-pad[3],:]
+        if pad[0]+pad[1] > 0:
+            logit = logit[:,:,:,pad[0]:-pad[1]]
+
+        return logit

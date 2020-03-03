@@ -10,8 +10,12 @@ from vos.datasets.DAVIS import DAVIS_2017_TrainVal
 from vos.datasets.video_synth import VideoSynthDataset
 from vos.datasets.frame_skip import FrameSkipDataset
 from vos.datasets.random_subset import RandomSubset
+
 from vos.models.STM import STM
-from vos.algo.videoobjseg import VideoObjSegAlgo
+from vos.algo.stm_train import STMAlgo
+from vos.models.EMN import EMN
+from vos.algo.emn_train import EMNAlgo
+
 from vos.runner.two_stage import TwoStageRunner
 
 from torch.nn import DataParallel
@@ -33,16 +37,12 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         **config["frame_skip_dataset_kwargs"]
     )
     davis_eval = RandomSubset(
-        FrameSkipDataset(
-            DAVIS_2017_TrainVal(**config["eval_dataset_kwargs"]),
-            **config["frame_skip_dataset_kwargs"]
-        ),
+        DAVIS_2017_TrainVal(**config["eval_dataset_kwargs"]),
         **config["random_subset_kwargs"]
     )
 
     model = DataParallel(STM())
-
-    algo = VideoObjSegAlgo(**config["algo_kwargs"])
+    algo = STMAlgo(**config["algo_kwargs"])
 
     runner = TwoStageRunner(
         affinity= affinity,

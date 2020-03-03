@@ -40,7 +40,7 @@ def get_default_config():
             max_clips_sample= 2,
         ),
         random_subset_kwargs= dict(
-            subset_len= 16,
+            subset_len= 8,
         ),
         pretrain_dataloader_kwargs= dict(
             batch_size= 4,
@@ -53,13 +53,15 @@ def get_default_config():
             num_workers= 4,
         ), # for a customized DataLoader
         eval_dataloader_kwargs= dict(
-            batch_size= 4,
+            batch_size= 1,
             num_workers= 4,
         ), # for a customized DataLoader
         algo_kwargs = dict(
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
             weight_decay= 0,
+            train_step_kwargs= dict(Mem_every= 1),
+            eval_step_kwargs= dict(Mem_every= 5),
         ),
         runner_kwargs = dict(
             pretrain_optim_epochs= int(10),
@@ -137,7 +139,7 @@ def main(args):
             variants[i]["eval_dataloader_kwargs"]["num_workers"] = 0
             
     run_experiments(
-        script="vos/experiments/STM.py",
+        script="vos/experiments/videoSeg.py",
         affinity_code=affinity_code,
         experiment_title=experiment_title+("--debug" if args.debug else ""),
         runs_per_setting=1,
