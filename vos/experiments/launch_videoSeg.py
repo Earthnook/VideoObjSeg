@@ -77,7 +77,7 @@ def get_default_config():
     )
 
 def main(args):
-    experiment_title = "STM_reproduction"
+    experiment_title = "video_segmentation"
     affinity_code = quick_affinity_code(n_parallel= 1)
     default_config = get_default_config()
 

@@ -71,5 +71,12 @@ class VideoMaskRunner(RunnerBase):
 
         masked_images = overlay_images(images, masks, alpha= 0.2)
         
-        tf_image_summary("data images with mask", data=masked_images, step= itr_i)
-        
+        tf_image_summary("data images", data= images.transpose(0,2,3,1), step= itr_i)
+        tf_image_summary("data images with mask", 
+            data=masked_images.transpose(0,2,3,1),
+            step= itr_i
+        )
+        tf_image_summary("data masks (first object)",
+            data=masks.transpose(0,2,3,1),
+            step= itr_i,
+        )
