@@ -1,6 +1,10 @@
 from vos.algo.videoobjseg import VideoObjSegAlgo
 from vos.utils.helpers import pad_divide_by
 
+import numpy as np
+import torch
+from torch.nn import functional as F
+
 def build_target_image(image, mask, n_objects):
     """ 
     @ Args:

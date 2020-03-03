@@ -1,5 +1,9 @@
 from vos.algo.videoobjseg import VideoObjSegAlgo
 
+import numpy as np
+import torch
+from torch.nn import functional as F
+
 class STMAlgo(VideoObjSegAlgo):
     """ The algorithm re-producing STM training method
     https://arxiv.org/abs/1904.006071

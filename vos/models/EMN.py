@@ -207,6 +207,8 @@ class EMN(STM.STM):
         self.Decoder = Decoder(1024, 256)
 
     def segment(self, frame, keys, values, num_objects, target_image):
+        """ NOTE: target_image must has shape (B, no, C, H, W) where no is the max of num_objects.
+        """
         # if num_objects == 0, treat as 1 object
         num_objects = max(num_objects.max().item(), 1)
         B, K, keydim, T, H, W = keys.shape # B nope= 1

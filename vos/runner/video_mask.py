@@ -56,3 +56,20 @@ class VideoMaskRunner(RunnerBase):
         del self._extra_infos
         self._extra_infos = {k: list() for k in ["images", "preds", "results"]}
         
+    def store_data_info(self, itr_i, data):
+        """ In case of data pre-processing bugs, log images into tensorflow
+        each image should be in batch
+        """
+        videos = data["video"].cpu().numpy()
+        masks = data["mask"].cpu().numpy()
+        n_objects = data["n_objects"].cpu().numpy()
+
+        _, T, C, H, W = videos.shape
+        _, _, n, _, _ = masks.shape
+        images = videos.reshape((-1, C, H, W))
+        masks = masks.reshape((-1, n, H, W))[:, 1:2] # choose only the first object to track
+
+        masked_images = overlay_images(images, masks, alpha= 0.2)
+        
+        tf_image_summary("data images with mask", data=masked_images, step= itr_i)
+        

@@ -9,11 +9,13 @@ from os import path
 def get_default_config():
     root_path = "/p300/videoObjSeg_dataset/"
     dataset_root_path = path.join(root_path, "DAVIS-2017-trainval-480p/")
+    exp_image_size= (384, 384)
     return dict(
-        exp_image_size= (384, 384),
+        exp_image_size= exp_image_size,
         pretrain_dataset_kwargs = dict(
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
+            max_n_objects= 8,
         ),
         train_dataset_kwargs = dict(
             root= dataset_root_path,
@@ -25,7 +27,7 @@ def get_default_config():
         ),
         videosynth_dataset_kwargs = dict(
             n_frames= 3,
-            resolution= (384, 384),
+            resolution= exp_image_size,
             resize_method= "crop",
             affine_kwargs= dict(
                 angle_max= 90.,
@@ -40,7 +42,8 @@ def get_default_config():
             max_clips_sample= 2,
         ),
         random_subset_kwargs= dict(
-            subset_len= 8,
+            subset_len= 4,
+            resolution= exp_image_size,
         ),
         pretrain_dataloader_kwargs= dict(
             batch_size= 4,
@@ -137,6 +140,7 @@ def main(args):
             variants[i]["pretrain_dataloader_kwargs"]["num_workers"] = 0
             variants[i]["dataloader_kwargs"]["num_workers"] = 0
             variants[i]["eval_dataloader_kwargs"]["num_workers"] = 0
+            variants[i]["random_subset_kwargs"]["subset_len"] = 2
             
     run_experiments(
         script="vos/experiments/videoSeg.py",
