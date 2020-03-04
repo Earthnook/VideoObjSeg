@@ -61,9 +61,12 @@ class VideoSynthDataset(Dataset):
 
         n, H, W = mask.shape
         layers_of_mask = []
-        for m in mask:
-            jittered_m = visionF.affine(self.to_pil_image(m), **affine_kwargs)
-            layers_of_mask.extend([self.to_tensor(jittered_m)])
+        for m_i in range(mask.shape[0]):
+            jittered_m = visionF.affine(self.to_pil_image(mask[m_i:m_i+1]), **affine_kwargs)
+            j_mask = self.to_tensor(jittered_m) # dtype = torch.float32
+            # Assuming there are only j_mask.max() and j_mask.min() two kinds of value in j_mask
+            j_mask_binary = (j_mask == j_mask.max()).to(dtype= torch.uint8)
+            layers_of_mask.extend([j_mask_binary])
         mask = torch.cat(layers_of_mask, 0).to(dtype= torch.uint8)
 
         return image, mask

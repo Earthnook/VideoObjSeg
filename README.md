@@ -32,9 +32,9 @@ This repo is forked from [STM](https://github.com/seoungwugoh/STM)
 
 1. This repo is focusing on experimenting the following problem
 
-    - Given a `video` (RGB array with size: `t, C, W, H`) with all frames and maybe a `init_mask` (array with size: `t, n, W, H`),
+    - Given a `video` (RGB array with size: `t, C, W, H`) with all frames and maybe a `init_mask` (array with size: `t, W, H`),
 
-        where the `n` of the `init_mask` depends on the problem with one-hot encoding
+        where the `init_mask` depends on the problem with index encoding
         
         and `c` is the channel of the video (usually 3).
 
@@ -67,3 +67,11 @@ This repo is forked from [STM](https://github.com/seoungwugoh/STM)
     ```bash
     python eval_DAVIS.py -g '1' -s val -y 17 -D [path/to/DAVIS]
     ```
+
+2. Using Jupyter Notebook to debug using this conda environment
+
+    ```bash
+    conda activate vos
+    python -m ipykernel install --user --name=vos
+    ```
+    

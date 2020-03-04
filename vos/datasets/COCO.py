@@ -107,7 +107,7 @@ class COCO(data.Dataset):
             raise ValueError("Wrong image shape dimensions\n{}".format(str(img)))
         H, W, _ = image.shape
 
-        mask = np.empty((H, W, self._max_n_objects), dtype= np.uint8)
+        mask = np.zeros((H, W, self._max_n_objects), dtype= np.uint8)
         bg = np.ones((H, W, 1), dtype= np.uint8) # a background
 
         n_objects = 0
