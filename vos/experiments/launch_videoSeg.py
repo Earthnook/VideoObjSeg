@@ -69,7 +69,7 @@ def get_default_config():
         runner_kwargs = dict(
             pretrain_optim_epochs= int(10),
             max_optim_epochs= int(20),
-            eval_interval= 10,
+            eval_interval= 20,
             log_interval= 5, # in terms of the # of calling algo.train()
             max_predata_see= int(8e4), # might make the training stop before reaching max_optim_epochs
             max_data_see= int(4e4),
@@ -97,29 +97,6 @@ def main(args):
         ("videosynth_dataset_kwargs", "affine_kwargs", "translate_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "scale_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "shear_max"),
-    ]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
-        [3, 2],
-        [3, 1],
-        # [2, 1],
-    ]
-    dir_names = ["total_frane{}-{}".format(*v) for v in values]
-    keys = [
-        ("frame_skip_dataset_kwargs", "n_frames"), 
-        ("videosynth_dataset_kwargs", "n_frames"),
-    ]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
-        # [8, 8],
-        [4, 4],
-    ]
-    dir_names = ["batchsize{}-{}".format(*v) for v in values]
-    keys = [
-        ("pretrain_dataloader_kwargs", "batch_size"), 
-        ("pretrain_dataloader_kwargs", "num_workers"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

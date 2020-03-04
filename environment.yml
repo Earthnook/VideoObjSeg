@@ -17,5 +17,6 @@ dependencies:
   - matplotlib
   - graphviz
   - tqdm
+  - jupyter # visualy debug
   - ptvsd # vscode debug
   # - git+git://github.com/ziwenzhuang/exptools@add_tensorboard # the tools to manage experiment
