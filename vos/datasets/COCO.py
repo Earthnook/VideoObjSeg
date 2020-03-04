@@ -117,7 +117,7 @@ class COCO(data.Dataset):
             """
             if n_objects >= self._max_n_objects: break
             ann_mask = self.coco.annToMask(ann)
-            mask[:, :, ann_i] |= ann_mask
+            mask[:, :, ann_i] = ann_mask
             bg[:, :, 0] &= (1-ann_mask)
             n_objects += 1
         mask = np.concatenate([bg, mask], axis= 2)

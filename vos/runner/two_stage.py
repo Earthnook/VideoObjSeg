@@ -56,8 +56,8 @@ class TwoStageRunner(VideoMaskRunner):
                     self.model.train()
                     
                 if itr_i % self.log_interval == 0:
+                    self.log_data_info(itr_i, data)
                     self.log_diagnostic(itr_i)
-                    self.store_data_info(itr_i, data)
                 if max_train_itr is not None and itr_i >= max_train_itr:
                     return itr_i
         return itr_i

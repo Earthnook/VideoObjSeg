@@ -49,14 +49,17 @@ class VideoMaskRunner(RunnerBase):
         # write to summary file
         tf_image_summary("input images", data=images, step= itr_i)
         for pred in preds:
-            tf_image_summary("predictions", data= np.expand_dims(pred, axis= 0), step= itr_i)
+            tf_image_summary("predictions",
+                data= np.expand_dims(pred, axis= 0) * 255,
+                step= itr_i
+            )
         tf_image_summary("masked images", data= results, step= itr_i)
 
         # reset
         del self._extra_infos
         self._extra_infos = {k: list() for k in ["images", "preds", "results"]}
         
-    def store_data_info(self, itr_i, data):
+    def log_data_info(self, itr_i, data):
         """ In case of data pre-processing bugs, log images into tensorflow
         each image should be in batch
         """
@@ -67,16 +70,20 @@ class VideoMaskRunner(RunnerBase):
         _, T, C, H, W = videos.shape
         _, _, n, _, _ = masks.shape
         images = videos.reshape((-1, C, H, W))
-        masks = masks.reshape((-1, n, H, W))[:, 1:2] # choose only the first object to track
-
-        masked_images = overlay_images(images, masks, alpha= 0.2)
+        masks_1 = masks.reshape((-1, n, H, W))[:, 1:2] # choose only the first object to track
+        bg = masks.reshape((-1, n, H, W))[:, 0:1] # choose the background mask
+        masked_images = overlay_images(images, masks_1, alpha= 0.2)
         
         tf_image_summary("data images", data= images.transpose(0,2,3,1), step= itr_i)
         tf_image_summary("data images with mask", 
             data=masked_images.transpose(0,2,3,1),
-            step= itr_i
+            step= itr_i,
         )
         tf_image_summary("data masks (first object)",
-            data=masks.transpose(0,2,3,1),
+            data=masks_1.transpose(0,2,3,1) * 255, # int are treated as 0-255 scale
+            step= itr_i,
+        )
+        tf_image_summary("data masks (background)",
+            data= bg.transpose(0,2,3,1) * 255,
             step= itr_i,
         )
