@@ -80,12 +80,15 @@ class TwoStageRunner(VideoMaskRunner):
         """
         self.startup()
         # pretrain
-        itr_i = self._train_loops(
-            dataloader= self.pretrain_dataloader,
-            eval_dataloader= self.eval_dataloader,
-            max_optim_epochs= self.pretrain_optim_epochs,
-            max_train_itr= self.max_pretrain_itr,
-        )
+        try:
+            itr_i = self._train_loops(
+                dataloader= self.pretrain_dataloader,
+                eval_dataloader= self.eval_dataloader,
+                max_optim_epochs= self.pretrain_optim_epochs,
+                max_train_itr= self.max_pretrain_itr,
+            )
+        except KeyboardInterrupt:
+            print("Revieced key board interrupt, goto next stage")
         logger.log("Finish pretraining, start main train at iteration: {}".format(itr_i))
         torch.cuda.empty_cache()
         # main train

@@ -100,6 +100,17 @@ def main(args):
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
+    values = [
+        # [int(8e6), int(4e6)],
+        [None, None],
+    ]
+    dir_names = ["max_data-{}".format(*v) for v in values]
+    keys = [
+        ("runner_kwargs", "max_predata_see"),
+        ("runner_kwargs", "max_data_see"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
     variants, log_dirs = make_variants(*variant_levels)
     for i, variant in enumerate(variants):
         variants[i] = update_config(default_config, variant)
