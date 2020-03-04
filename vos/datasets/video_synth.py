@@ -81,7 +81,7 @@ class VideoSynthDataset(Dataset):
         with torch.no_grad():
             for image, mask in zip(images, masks):
                 video, m_video = [image], [mask]
-                for frame_i in range(self.n_frames):
+                for frame_i in range(self.n_frames-1):
                     frame, m_frame = self.random_transforms(image, mask)
                     video.append(frame)
                     m_video.append(m_frame)
