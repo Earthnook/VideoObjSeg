@@ -31,6 +31,8 @@ class RunnerBase:
         And call to move to cuda if available
         """
         p = psutil.Process()
+        
+        # set experiment affinity
         try:
             if (self.affinity.get("master_cpus", None) is not None and
                     self.affinity.get("set_affinity", True)):
@@ -40,18 +42,17 @@ class RunnerBase:
             cpu_affin = "UNAVAILABLE affinity"
         logger.log(f"Runner {getattr(self, 'rank', '')} master CPU affinity: "
             f"{cpu_affin}.")
-        # if self.affinity.get("master_torch_threads", None) is not None:
-        #     torch.set_num_threads(self.affinity["master_torch_threads"])
+        # if affinity.get("master_torch_threads", None) is not None:
+        #     torch.set_num_threads(affinity["master_torch_threads"])
         logger.log(f"Runner {getattr(self, 'rank', '')} master Torch threads: "
             f"{torch.get_num_threads()}.")
 
         # configure cuda for this experiment
-        if isinstance(self.affinity, list):
-            useable_cuda = [str(aff["cuda_idx"]) for aff in self.affinity]
-        else:
-            useable_cuda = [str(self.affinity.get("cuda_idx", None))]
-        os.environ['CUDA_VISIBLE_DEVICES'] = ",".join(useable_cuda)
-        
+        os.environ['CUDA_VISIBLE_DEVICES'] = \
+            ",".join([str(i) for i in self.affinity.get("cuda_idx", [])])
+        logger.log(f"Runner {getattr(self, 'rank', '')} CUDA_VISIBLE_DEVICES: "
+            f"{os.environ['CUDA_VISIBLE_DEVICES']}.")
+
         if torch.cuda.is_available():
             device = torch.device("cuda")
             self.model.to(device= device)
