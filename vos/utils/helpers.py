@@ -106,11 +106,14 @@ def overlay_images(images, masks, alpha= 0.4):
 
     return images
 
-def load_snapshot(logdir, model, algo):
+def load_snapshot(logdir, run_ID, model, algo):
     """ find proper snapshot file and load state dict to them
     NOTE: the file name is hard coded here, please make sure
     """
-    files = [f for f in os.listdir(logdir) if os.path.isfile(f) and ".pkl" in f]
+    files = [f for f in os.listdir(os.path.join(logdir, f"run_{run_ID}")) \
+            if os.path.isfile(f) and ".pkl" in f]
+    if len(files) < 1:
+        return 0
     # Assuming there is only 1 .pkl file
     states = torch.load(os.path.join(logdir, files[0]))
     model.load_state_dict(states["model_state_dict"])

@@ -52,8 +52,10 @@ class TwoStageRunner(VideoMaskRunner):
                     if not eval_dataloader is None and itr_i % self.eval_interval == 0:
                         self.model.eval()
                         for eval_data in tqdm(eval_dataloader):
+                            torch.cuda.empty_cache()
                             eval_info, extra_info = self.algo.eval(itr_i, eval_data)
                             self.store_eval_info(itr_i, eval_info, extra_info)
+                            torch.cuda.empty_cache()
                         self.model.train()
                         
                     if itr_i % self.log_interval == 0:

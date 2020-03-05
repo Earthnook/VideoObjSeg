@@ -46,7 +46,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     algo = STMAlgo(**config["algo_kwargs"])
 
     # load parameters if available
-    load_snapshot(log_dir, model, algo)
+    itr_i = load_snapshot(log_dir, run_ID, model, algo)
 
     runner = TwoStageRunner(
         affinity= affinity,
@@ -64,7 +64,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     name = "VOS_problem"
     with logger_context(log_dir, run_ID, name, log_params= config, snapshot_mode= "last"):
-        runner.train()
+        runner.train(itr_i)
 
 def main(*args):
     build_and_train(*args)

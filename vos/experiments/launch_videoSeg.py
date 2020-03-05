@@ -104,19 +104,20 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [int(8e6), int(4e6)],
-        [None, None],
+        [(480, 480), (480, 480), (480, 480)],
+        # [(384, 384), (384, 384), (384, 384)],
     ]
-    dir_names = ["max_data-{}".format(*v) for v in values]
+    dir_names = ["img_res-{}".format(v[0][0]) for v in values]
     keys = [
-        ("runner_kwargs", "max_predata_see"),
-        ("runner_kwargs", "max_data_see"),
+        ("exp_image_size",),
+        ("videosynth_dataset_kwargs", "resolution"),
+        ("random_subset_kwargs", "resolution")
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
         [True, ],
-        [False, ],
+        # [False, ],
     ]
     dir_names = ["active_bn-{}".format(*v) for v in values]
     keys = [

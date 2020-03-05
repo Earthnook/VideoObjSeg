@@ -43,6 +43,6 @@ class RandomSubset(Dataset):
         elif self._resize_method == "resize":
             raise NotImplementedError # put here for later implementation
         else:
-            raise NotImplementedError
+            pass
         
         return item
