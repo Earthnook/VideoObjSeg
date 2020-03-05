@@ -17,6 +17,7 @@ from vos.models.EMN import EMN
 from vos.algo.emn_train import EMNAlgo
 
 from vos.runner.two_stage import TwoStageRunner
+from vos.utils.helpers import load_snapshot
 
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
@@ -43,6 +44,9 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     model = DataParallel(STM(**config["model_kwargs"]))
     algo = STMAlgo(**config["algo_kwargs"])
+
+    # load parameters if available
+    load_snapshot(log_dir, model, algo)
 
     runner = TwoStageRunner(
         affinity= affinity,

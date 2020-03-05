@@ -40,7 +40,7 @@ class TwoStageRunner(VideoMaskRunner):
             eval_dataloader,
             max_optim_epochs,
             max_train_itr,
-            itr_i= 0,
+            itr_i,
         ):
         try:
             for epoch_i in range(max_optim_epochs):
@@ -78,7 +78,7 @@ class TwoStageRunner(VideoMaskRunner):
             self.max_train_itr = None
         super(TwoStageRunner, self).startup()
 
-    def train(self):
+    def train(self, itr_i= 0):
         """ one more image dataset to pre-train the network
         """
         self.startup()
@@ -88,6 +88,7 @@ class TwoStageRunner(VideoMaskRunner):
             eval_dataloader= self.eval_dataloader,
             max_optim_epochs= self.pretrain_optim_epochs,
             max_train_itr= self.max_pretrain_itr,
+            itr_i= itr_i,
         )
         logger.log("Finish pretraining, start main train at iteration: {}".format(itr_i))
         torch.cuda.empty_cache()
