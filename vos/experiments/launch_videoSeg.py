@@ -59,14 +59,17 @@ def get_default_config():
             batch_size= 1,
             num_workers= 4,
         ), # for a customized DataLoader
-        algo_kwargs = dict(
+        model_kwargs= dict(
+            train_bn= False,
+        ),
+        algo_kwargs= dict(
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
             weight_decay= 0,
             train_step_kwargs= dict(Mem_every= 1),
             eval_step_kwargs= dict(Mem_every= 5),
         ),
-        runner_kwargs = dict(
+        runner_kwargs= dict(
             pretrain_optim_epochs= int(10),
             max_optim_epochs= int(20),
             eval_interval= 20,
@@ -108,6 +111,16 @@ def main(args):
     keys = [
         ("runner_kwargs", "max_predata_see"),
         ("runner_kwargs", "max_data_see"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        [True, ],
+        [False, ],
+    ]
+    dir_names = ["active_bn-{}".format(*v) for v in values]
+    keys = [
+        ("model_kwargs", "train_bn"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

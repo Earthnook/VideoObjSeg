@@ -37,7 +37,7 @@ class RunnerBase:
                 p.cpu_affinity(self.affinity["master_cpus"])
             cpu_affin = p.cpu_affinity()
         except AttributeError:
-            cpu_affin = "UNAVAILABLE MacOS"
+            cpu_affin = "UNAVAILABLE affinity"
         logger.log(f"Runner {getattr(self, 'rank', '')} master CPU affinity: "
             f"{cpu_affin}.")
         # if self.affinity.get("master_torch_threads", None) is not None:
@@ -45,7 +45,13 @@ class RunnerBase:
         logger.log(f"Runner {getattr(self, 'rank', '')} master Torch threads: "
             f"{torch.get_num_threads()}.")
 
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(self.affinity.get("cuda_idx", ""))
+        # configure cuda for this experiment
+        if isinstance(self.affinity, list):
+            useable_cuda = [str(aff["cuda_idx"]) for aff in self.affinity]
+        else:
+            useable_cuda = [str(self.affinity.get("cuda_idx", None))]
+        os.environ['CUDA_VISIBLE_DEVICES'] = ",".join(useable_cuda)
+        
         if torch.cuda.is_available():
             device = torch.device("cuda")
             self.model.to(device= device)

@@ -41,7 +41,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         **config["random_subset_kwargs"]
     )
 
-    model = DataParallel(STM())
+    model = DataParallel(STM(**config["model_kwargs"]))
     algo = STMAlgo(**config["algo_kwargs"])
 
     runner = TwoStageRunner(

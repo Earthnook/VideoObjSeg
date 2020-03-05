@@ -47,8 +47,10 @@ class ResBlock(nn.Module):
         return x + r 
 
 class Encoder_M(nn.Module):
-    def __init__(self):
+    def __init__(self, train_bn= True):
         super(Encoder_M, self).__init__()
+        self.train_bn = train_bn
+
         self.conv1_m = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.conv1_o = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
@@ -81,12 +83,15 @@ class Encoder_M(nn.Module):
     
     def train(self, mode= True):
         super(Encoder_M, self).train(mode= mode)
-        # disable all self's bn layer
-        self.bn1.eval()
+        if not self.train_bn:
+            # disable all self's bn layer
+            self.bn1.eval()
  
 class Encoder_Q(nn.Module):
-    def __init__(self):
+    def __init__(self, train_bn= True):
         super(Encoder_Q, self).__init__()
+        self.train_bn = train_bn
+
         resnet = models.resnet50(pretrained=True)
         self.conv1 = resnet.conv1
         self.bn1 = resnet.bn1
@@ -114,8 +119,9 @@ class Encoder_Q(nn.Module):
     
     def train(self, mode= True):
         super(Encoder_Q, self).train(mode= mode)
-        # disable all self's bn layer
-        self.bn1.eval()
+        if not self.train_bn:
+            # disable all self's bn layer
+            self.bn1.eval()
 
 
 class Refine(nn.Module):
@@ -193,10 +199,10 @@ class KeyValue(nn.Module):
 
 
 class STM(nn.Module):
-    def __init__(self):
+    def __init__(self, train_bn= False):
         super(STM, self).__init__()
-        self.Encoder_M = Encoder_M() 
-        self.Encoder_Q = Encoder_Q() 
+        self.Encoder_M = Encoder_M(train_bn= train_bn) 
+        self.Encoder_Q = Encoder_Q(train_bn= train_bn) 
 
         self.KV_M_r4 = KeyValue(1024, keydim=128, valdim=512)
         self.KV_Q_r4 = KeyValue(1024, keydim=128, valdim=512)

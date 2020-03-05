@@ -11,7 +11,7 @@ class SiamQueryEncoder(nn.Module):
     Considering saving the memory, expand operation will be done here.
         And all output tensors will have leading dim (b*no, )
     """
-    def __init__(self):
+    def __init__(self, train_bn= True):
         super(SiamQueryEncoder, self).__init__()
 
     def forward(self, in_f, target_image):
@@ -201,7 +201,7 @@ class EMN(STM.STM):
     """ Enhanced Memory Network： 
     https://youtube-vos.org/assets/challenge/2019/reports/YouTube-VOS-01_Enhanced_Memory_Network_for_Video_Segmentation.pdf
     """
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(EMN, self).__init__()
         self.Encoder_Q = SiamQueryEncoder()
         self.Decoder = Decoder(1024, 256)
