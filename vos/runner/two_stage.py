@@ -42,24 +42,27 @@ class TwoStageRunner(VideoMaskRunner):
             max_train_itr,
             itr_i= 0,
         ):
-        for epoch_i in range(max_optim_epochs):
-            for batch_i, data in tqdm(enumerate(dataloader)):
-                itr_i += 1
-                train_info, extra_info = self.algo.train(itr_i, data)
-                self.store_train_info(itr_i, train_info, extra_info)
+        try:
+            for epoch_i in range(max_optim_epochs):
+                for batch_i, data in tqdm(enumerate(dataloader)):
+                    itr_i += 1
+                    train_info, extra_info = self.algo.train(itr_i, data)
+                    self.store_train_info(itr_i, train_info, extra_info)
 
-                if not eval_dataloader is None and itr_i % self.eval_interval == 0:
-                    self.model.eval()
-                    for eval_data in tqdm(eval_dataloader):
-                        eval_info, extra_info = self.algo.eval(itr_i, eval_data)
-                        self.store_eval_info(itr_i, eval_info, extra_info)
-                    self.model.train()
-                    
-                if itr_i % self.log_interval == 0:
-                    self.log_data_info(itr_i, data)
-                    self.log_diagnostic(itr_i)
-                if max_train_itr is not None and itr_i >= max_train_itr:
-                    return itr_i
+                    if not eval_dataloader is None and itr_i % self.eval_interval == 0:
+                        self.model.eval()
+                        for eval_data in tqdm(eval_dataloader):
+                            eval_info, extra_info = self.algo.eval(itr_i, eval_data)
+                            self.store_eval_info(itr_i, eval_info, extra_info)
+                        self.model.train()
+                        
+                    if itr_i % self.log_interval == 0:
+                        self.log_data_info(itr_i, data)
+                        self.log_diagnostic(itr_i)
+                    if max_train_itr is not None and itr_i >= max_train_itr:
+                        return itr_i
+        except KeyboardInterrupt:
+            print("Revieced key board interrupt, goto next stage")
         return itr_i
 
     def startup(self):
@@ -80,15 +83,12 @@ class TwoStageRunner(VideoMaskRunner):
         """
         self.startup()
         # pretrain
-        try:
-            itr_i = self._train_loops(
-                dataloader= self.pretrain_dataloader,
-                eval_dataloader= self.eval_dataloader,
-                max_optim_epochs= self.pretrain_optim_epochs,
-                max_train_itr= self.max_pretrain_itr,
-            )
-        except KeyboardInterrupt:
-            print("Revieced key board interrupt, goto next stage")
+        itr_i = self._train_loops(
+            dataloader= self.pretrain_dataloader,
+            eval_dataloader= self.eval_dataloader,
+            max_optim_epochs= self.pretrain_optim_epochs,
+            max_train_itr= self.max_pretrain_itr,
+        )
         logger.log("Finish pretraining, start main train at iteration: {}".format(itr_i))
         torch.cuda.empty_cache()
         # main train
