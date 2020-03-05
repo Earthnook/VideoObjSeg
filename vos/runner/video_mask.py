@@ -52,9 +52,9 @@ class VideoMaskRunner(RunnerBase):
 
         # write to summary file
         tf_image_summary("input images", data=images, step= itr_i)
-        for pred in preds:
+        for mask in masks:
             tf_image_summary("ground truths",
-                data= np.expand_dims(masks, axis= 0) * 255,
+                data= np.expand_dims(mask, axis= 0) * 255,
                 step= itr_i
             )
         for pred in preds:
