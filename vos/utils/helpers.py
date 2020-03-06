@@ -110,8 +110,11 @@ def load_snapshot(logdir, run_ID, model, algo):
     """ find proper snapshot file and load state dict to them
     NOTE: the file name is hard coded here, please make sure
     """
-    files = [f for f in os.listdir(os.path.join(logdir, f"run_{run_ID}")) \
-            if os.path.isfile(f) and ".pkl" in f]
+    try:
+        files = [f for f in os.listdir(os.path.join(logdir, f"run_{run_ID}")) \
+                if os.path.isfile(f) and ".pkl" in f]
+    except FileNotFoundError:
+        return 0
     if len(files) < 1:
         return 0
     # Assuming there is only 1 .pkl file

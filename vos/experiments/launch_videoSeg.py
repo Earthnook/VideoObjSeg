@@ -104,10 +104,12 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [(480, 480), (480, 480), (480, 480)],
+        [(300, 400), (300, 400), (300, 400)],
+        # [(320, 480), (320, 480), (320, 480)],
+        # [(480, 480), (480, 480), (480, 480)],
         # [(384, 384), (384, 384), (384, 384)],
     ]
-    dir_names = ["img_res-{}".format(v[0][0]) for v in values]
+    dir_names = ["img_res-{},{}".format(*v[0]) for v in values]
     keys = [
         ("exp_image_size",),
         ("videosynth_dataset_kwargs", "resolution"),
