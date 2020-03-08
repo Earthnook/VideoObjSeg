@@ -1,5 +1,4 @@
 from vos.algo.base import AlgoBase, TrainInfo, EvalInfo
-from vos.models.cross_entropy_onehot import CrossEntropyOneHot
 from vos.utils.quick_args import save__init__args
 
 from torchvision import transforms
