@@ -38,6 +38,9 @@ class AlgoBase:
         """
         return dict()
 
+    def load_state_dict(self, state):
+        pass
+
     def train(self, optim_i, data):
         """ Perform one interation of optimization. Under most circumstance, it corresponding to
         one optim.step() call.

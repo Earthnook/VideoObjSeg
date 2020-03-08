@@ -8,6 +8,12 @@ class STMAlgo(VideoObjSegAlgo):
     """ The algorithm re-producing STM training method
     https://arxiv.org/abs/1904.006071
     """
+    def __init__(self,
+        include_bg_loss= False,
+        **kwargs):
+        self.include_bg_loss = include_bg_loss
+        super(STMAlgo, self).__init__(**kwargs)
+
     def step(self,
             frames: torch.Tensor,
             masks: torch.Tensor,
@@ -64,4 +70,9 @@ class STMAlgo(VideoObjSegAlgo):
 
         pred = (estimates.detach() == estimates.detach().max(dim= 1, keepdim= True)[0])
         pred = pred.to(dtype= torch.uint8)
-        return pred, self.loss_fn(logits[:, 1:], masks[:, 1:]) # only query frames are used
+
+        # select loss calculation
+        loss_idx = 0 if self.include_bg_loss else 1
+
+        # calculate loss and return
+        return pred, self.loss_fn(logits[:, loss_idx:], masks[:, loss_idx:]) # only query frames are used

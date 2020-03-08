@@ -25,22 +25,23 @@ class TwoStageRunner(VideoMaskRunner):
 
     def store_train_info(self, itr_i, train_info, extra_info):
         super(TwoStageRunner, self).store_train_info(itr_i, train_info, extra_info)
-        self._store_extra_info(itr_i, extra_info)
+        self._store_extra_info(itr_i, extra_info, evaluate= False)
 
     def store_eval_info(self, itr_i, eval_info, extra_info):
         super(TwoStageRunner, self).store_eval_info(itr_i, eval_info, extra_info)
-        self._store_extra_info(itr_i, extra_info)
+        self._store_extra_info(itr_i, extra_info, evaluate= True)
 
     def log_diagnostic(self, itr_i):
         super(TwoStageRunner, self).log_diagnostic(itr_i)
-        self._log_extra_info(itr_i)
+        self._log_extra_info(itr_i, evaluate= False)
+        self._log_extra_info(itr_i, evaluate= True)
 
     def _train_loops(self,
             dataloader,
             eval_dataloader,
             max_optim_epochs,
             max_train_itr,
-            itr_i= 0,
+            itr_i,
         ):
         try:
             for epoch_i in range(max_optim_epochs):
@@ -52,8 +53,10 @@ class TwoStageRunner(VideoMaskRunner):
                     if not eval_dataloader is None and itr_i % self.eval_interval == 0:
                         self.model.eval()
                         for eval_data in tqdm(eval_dataloader):
+                            torch.cuda.empty_cache()
                             eval_info, extra_info = self.algo.eval(itr_i, eval_data)
                             self.store_eval_info(itr_i, eval_info, extra_info)
+                            torch.cuda.empty_cache()
                         self.model.train()
                         
                     if itr_i % self.log_interval == 0:
@@ -78,7 +81,7 @@ class TwoStageRunner(VideoMaskRunner):
             self.max_train_itr = None
         super(TwoStageRunner, self).startup()
 
-    def train(self):
+    def train(self, itr_i= 0):
         """ one more image dataset to pre-train the network
         """
         self.startup()
@@ -88,6 +91,7 @@ class TwoStageRunner(VideoMaskRunner):
             eval_dataloader= self.eval_dataloader,
             max_optim_epochs= self.pretrain_optim_epochs,
             max_train_itr= self.max_pretrain_itr,
+            itr_i= itr_i,
         )
         logger.log("Finish pretraining, start main train at iteration: {}".format(itr_i))
         torch.cuda.empty_cache()

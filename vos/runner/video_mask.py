@@ -1,5 +1,5 @@
 from vos.runner.base import RunnerBase
-from vos.utils.helpers import overlay_images
+from vos.utils.helpers import stack_images, stack_masks
 
 from exptools.logging.logger import tf_image_summary
 
@@ -11,55 +11,87 @@ class VideoMaskRunner(RunnerBase):
         videos: numpy.ndarray with shape (b, t, C, H, W)
         preds: numpy.ndarray with shape (b, t, n, H, W) with one-hot encoding
     """
-    def _store_extra_info(self, itr_i, extra_info, n_select_frames= 1):
+    def __init__(self, **kwargs):
+        super(VideoMaskRunner, self).__init__(**kwargs)
+        self._extra_infos = None
+        self._eval_extra_infos = None
+
+    def _store_extra_info(self, itr_i, extra_info, n_select_frames= 1, evaluate= False):
         """ For the memory efficiency, this will only randomly choose `n_select_frames` of frames
         to store.
         """
-        if not hasattr(self, "_extra_infos"):
-            # a hacky way of initialization
-            self._extra_infos = {k: list() for k in ["images", "preds", "results"]}
-
         videos = extra_info["videos"]
+        masks = extra_info["masks"]
         preds = extra_info["preds"]
 
-        _, T, C, H, W = videos.shape
+        B, T, C, H, W = videos.shape
+        _, _, N, _, _ = masks.shape
         _, _, n, _, _ = preds.shape
 
         # select frames
         t_i = np.random.choice(T, n_select_frames)
-        videos = videos[:, t_i]
+        images = videos[:, t_i]
+        masks = masks[:, t_i]
         preds = preds[:, t_i]
 
-        images = videos.reshape((-1, C, H, W))
-        preds = preds.reshape((-1, n, H, W))
+        images = images.reshape((-1, C, H, W))
+        masks = masks.reshape((-1, N, H, W))
+        preds = preds.reshape((-1, n, H, W)) # (1, C, H, B*W)
 
-        masked_images = overlay_images(images, preds, alpha= 0.2)
-        self._extra_infos["images"].extend([image for image in images])
-        self._extra_infos["preds"].extend([image for image in preds])
-        self._extra_infos["results"].extend([image for image in masked_images])
+        if not evaluate:
+            if self._extra_infos is None:
+                # a hacky way of initialization
+                self._extra_infos = {k: list() for k in ["images", "masks", "preds"]}
+            self._extra_infos["images"].extend([image for image in images])
+            self._extra_infos["masks"].extend([mask for mask in masks])
+            self._extra_infos["preds"].extend([pred for pred in preds])
+        else:
+            if self._eval_extra_infos is None:
+                # a hacky way of initialization
+                self._eval_extra_infos = {k: list() for k in ["images", "masks", "preds"]}
+            self._eval_extra_infos["images"].extend([image for image in images])
+            self._eval_extra_infos["masks"].extend([mask for mask in masks])
+            self._eval_extra_infos["preds"].extend([pred for pred in preds])
 
-    def _log_extra_info(self, itr_i):
-        # transpose from (b, C, H, W) to (b, H, W, C)
-        images = np.stack(self._extra_infos["images"], axis= 0).transpose(0,2,3,1)
-        results = np.stack(self._extra_infos["results"], axis= 0).transpose(0,2,3,1)
-        # due to multi-channel, preds are a bit different
-        preds = [np.expand_dims(np.hstack(x[:]), axis= 2) \
-            for x in self._extra_infos["preds"]] # a list of (H, n*W, 1)
+    def _log_extra_info(self, itr_i, evaluate= False):
+        # transpose from (b, C, H, W) to (1, H, b*W, C)
+        if evaluate and not self._eval_extra_infos is None:
+            images = np.stack(self._eval_extra_infos["images"], axis= 0)
+            masks = np.stack(self._eval_extra_infos["masks"], axis= 0)
+            preds = np.stack(self._eval_extra_infos["preds"], axis= 0)
+        elif not evaluate and not self._extra_infos is None:
+            images = np.stack(self._extra_infos["images"], axis= 0)
+            masks = np.stack(self._extra_infos["masks"], axis= 0)
+            preds = np.stack(self._extra_infos["preds"], axis= 0)
+        else:
+            return
+        s_images = stack_images(images) # (1, C, H, b*W)
+        s_masks = stack_masks(masks) # (1, 1, b*H, N*W)
+        s_preds = stack_masks(preds)
 
         # write to summary file
-        tf_image_summary("input images", data=images, step= itr_i)
-        for pred in preds:
-            tf_image_summary("predictions",
-                data= np.expand_dims(pred, axis= 0) * 255,
-                step= itr_i
-            )
-        tf_image_summary("masked images", data= results, step= itr_i)
+        tf_image_summary(("Eval " if evaluate else "") + "input images",
+            data= s_images.transpose(0,2,3,1),
+            step= itr_i
+        )
+        tf_image_summary(("Eval " if evaluate else "") + "ground truths",
+            data= s_masks.transpose(0,2,3,1) * 255,
+            step= itr_i
+        )
+        tf_image_summary(("Eval " if evaluate else "") + "predictions",
+            data= s_preds.transpose(0,2,3,1) * 255,
+            step= itr_i
+        )
 
         # reset
-        del self._extra_infos
-        self._extra_infos = {k: list() for k in ["images", "preds", "results"]}
+        if evaluate:
+            del self._eval_extra_infos
+            self._eval_extra_infos = None
+        else:
+            del self._extra_infos
+            self._extra_infos = None
         
-    def log_data_info(self, itr_i, data):
+    def log_data_info(self, itr_i, data, n_select_frames= 1):
         """ In case of data pre-processing bugs, log images into tensorflow
         each image should be in batch
         """
@@ -67,23 +99,20 @@ class VideoMaskRunner(RunnerBase):
         masks = data["mask"].cpu().numpy()
         n_objects = data["n_objects"].cpu().numpy()
 
-        _, T, C, H, W = videos.shape
-        _, _, n, _, _ = masks.shape
-        images = videos.reshape((-1, C, H, W))
-        masks_1 = masks.reshape((-1, n, H, W))[:, 1:2] # choose only the first object to track
-        bg = masks.reshape((-1, n, H, W))[:, 0:1] # choose the background mask
-        masked_images = overlay_images(images, masks_1, alpha= 0.2)
-        
-        tf_image_summary("data images", data= images.transpose(0,2,3,1), step= itr_i)
-        tf_image_summary("data images with mask", 
-            data=masked_images.transpose(0,2,3,1),
-            step= itr_i,
+        b, T, C, H, W = videos.shape
+        _, _, N, _, _ = masks.shape
+        # select frames
+        t_i = np.random.choice(T, n_select_frames)
+        images = videos[:, t_i].reshape(-1, C, H, W) # (b*t, C, H, W)
+        masks = masks[:, t_i].reshape(-1, N, H, W) # (b*t, N, H, W)
+        s_images = stack_images(images)
+        s_masks = stack_masks(masks) # (1, 1, b*t*H, N*W)
+
+        tf_image_summary("data images",
+            data= s_images.transpose(0,2,3,1),
+            step= itr_i
         )
-        tf_image_summary("data masks (first object)",
-            data=masks_1.transpose(0,2,3,1) * 255, # int are treated as 0-255 scale
-            step= itr_i,
-        )
-        tf_image_summary("data masks (background)",
-            data= bg.transpose(0,2,3,1) * 255,
+        tf_image_summary("data masks",
+            data=s_masks.transpose(0,2,3,1) * 255, # int are treated as 0-255 scale
             step= itr_i,
         )

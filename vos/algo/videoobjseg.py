@@ -91,6 +91,7 @@ class VideoObjSegAlgo(AlgoBase):
             ), \
             dict(
                 videos= data["video"].cpu().numpy(),
+                masks= data["mask"].cpu().numpy(),
                 preds= preds,
                 n_objects= data["n_objects"]
             )
@@ -123,6 +124,7 @@ class VideoObjSegAlgo(AlgoBase):
             ), \
             dict(
                 videos= data["video"].cpu().numpy(),
+                masks= data["mask"].cpu().numpy(),
                 preds= preds,
                 n_objects= data["n_objects"]
             )

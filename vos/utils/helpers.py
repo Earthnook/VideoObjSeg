@@ -106,6 +106,47 @@ def overlay_images(images, masks, alpha= 0.4):
 
     return images
 
+def load_snapshot(logdir, run_ID, model, algo):
+    """ find proper snapshot file and load state dict to them
+    NOTE: the file name is hard coded here, please make sure
+    """
+    try:
+        files = [f for f in os.listdir(os.path.join(logdir, f"run_{run_ID}")) \
+                if os.path.isfile(f) and ".pkl" in f]
+    except FileNotFoundError:
+        return 0
+    if len(files) < 1:
+        return 0
+    # Assuming there is only 1 .pkl file
+    states = torch.load(os.path.join(logdir, files[0]))
+    model.load_state_dict(states["model_state_dict"])
+    algo.load_state_dict(states["algo_state_dict"])
+    return states["itr_i"]
 
+def stack_images(images):
+    """ Given a batch of images as ndarray (b, n, C, H, W)
+    with leading dim in (b, n) or (n,). Return a single image
+    that stack all images together as ndarray (1, C, b*H, n*W)
+    """
+    if len(images.shape) == 5:
+        b, n, C, H, W = images.shape
+    else:
+        images = np.expand_dims(images, axis= 0)
+        b, n, C, H, W = images.shape
+    
+    images = images.transpose(2,0,3,1,4)
+    images = images.reshape(1, C, b*H, n*W)
+    return images
 
+def stack_masks(masks):
+    """ Given a batch of masks as ndarray (b, N, H, W) with
+    leading dim in (b,). It is difficult to get another channel.
+    Return a single mask as ndarray (1, 1, b*H, N*W)
+    """
+    assert len(masks.shape) == 4, "Wrong shape {}".format(masks.shape)
+    b, N, H, W = masks.shape
 
+    masks = masks.transpose(0,2,1,3)
+    masks = masks.reshape(1,1,b*H, N*W)
+    return masks
+    
