@@ -56,7 +56,7 @@ class VideoMaskRunner(RunnerBase):
             step= itr_i
         )
         tf_image_summary("ground truths",
-            data= s_masks.tranpose(0,2,3,1) * 255,
+            data= s_masks.transpose(0,2,3,1) * 255,
             step= itr_i
         )
         tf_image_summary("predictions",
@@ -77,13 +77,13 @@ class VideoMaskRunner(RunnerBase):
         n_objects = data["n_objects"].cpu().numpy()
 
         b, T, C, H, W = videos.shape
-        _, _, n, _, _ = masks.shape
+        _, _, N, _, _ = masks.shape
         # select frames
         t_i = np.random.choice(T, n_select_frames)
-        images = videos[:, t_i] # (b, C, H, W)
-        masks = masks[:, t_i] # (b, N, H, W)
+        images = videos[:, t_i].reshape(-1, C, H, W) # (b*t, C, H, W)
+        masks = masks[:, t_i].reshape(-1, N, H, W) # (b*t, N, H, W)
         s_images = stack_images(images)
-        s_masks = stack_masks(masks) # (1, 1, b*H, N*W)
+        s_masks = stack_masks(masks) # (1, 1, b*t*H, N*W)
 
         tf_image_summary("data images",
             data= s_images.transpose(0,2,3,1),

@@ -61,11 +61,21 @@ class VideoSynthDataset(Dataset):
 
         n, H, W = mask.shape
         layers_of_mask = []
-        for m_i in range(mask.shape[0]):
-            jittered_m = visionF.affine(self.to_pil_image(mask[m_i:m_i+1]), **affine_kwargs)
+        for m_i in range(mask.shape[0]): # for each channel
+            msk = mask[m_i:m_i+1]
+            if m_i == 0:
+                # back ground channel is a bit different
+                msk = ~msk
+            jittered_m = visionF.affine(self.to_pil_image(msk), **affine_kwargs)
             j_mask = self.to_tensor(jittered_m) # dtype = torch.float32
             # Assuming there are only j_mask.max() and j_mask.min() two kinds of value in j_mask
-            j_mask_binary = (j_mask == j_mask.max()).to(dtype= torch.uint8)
+            j_max = j_mask.max()
+            if j_max == 0:
+                j_max = 1 
+            j_mask_binary = (j_mask == j_max).to(dtype= torch.uint8)
+            # background is a bit different
+            if m_i == 0:
+                j_mask_binary = ~j_mask_binary
             layers_of_mask.extend([j_mask_binary])
         mask = torch.cat(layers_of_mask, 0).to(dtype= torch.uint8)
 
@@ -75,8 +85,6 @@ class VideoSynthDataset(Dataset):
         """ Synthesize video clips by torch images. Return a torch.Tensor as a batch of
         video clips
         """
-        # pil_images = [self.to_pil_image(img) for img in images]
-        # pil_masks = [self.to_pil_image(msk) for msk in masks]
         videos, m_videos = [], []
         with torch.no_grad():
             for image, mask in zip(images, masks):
