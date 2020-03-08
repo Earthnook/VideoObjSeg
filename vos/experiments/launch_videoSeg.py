@@ -63,6 +63,7 @@ def get_default_config():
             train_bn= False,
         ),
         algo_kwargs= dict(
+            include_bg_loss= False,
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
             weight_decay= 0,
@@ -74,8 +75,8 @@ def get_default_config():
             max_optim_epochs= int(20),
             eval_interval= 20,
             log_interval= 5, # in terms of the # of calling algo.train()
-            max_predata_see= int(8e4), # might make the training stop before reaching max_optim_epochs
-            max_data_see= int(4e4),
+            max_predata_see= None, # might make the training stop before reaching max_optim_epochs
+            max_data_see= None,
         )
     )
 
@@ -104,10 +105,10 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [(300, 400), (300, 400), (300, 400)],
+        # [(300, 400), (300, 400), (300, 400)],
         # [(320, 480), (320, 480), (320, 480)],
         # [(480, 480), (480, 480), (480, 480)],
-        # [(384, 384), (384, 384), (384, 384)],
+        [(384, 384), (384, 384), (384, 384)],
     ]
     dir_names = ["img_res-{},{}".format(*v[0]) for v in values]
     keys = [
@@ -124,6 +125,27 @@ def main(args):
     dir_names = ["active_bn-{}".format(*v) for v in values]
     keys = [
         ("model_kwargs", "train_bn"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        [True, ],
+        # [False, ],
+    ]
+    dir_names = ["bg_loss-{}".format(*v) for v in values]
+    keys = [
+        ("algo_kwargs", "include_bg_loss"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        [1, 1],
+        # [4, 4],
+    ]
+    dir_names = ["b_size-{}".format(v[0]) for v in values]
+    keys = [
+        ("pretrain_dataloader_kwargs", "batch_size"),
+        ("dataloader_kwargs", "batch_size"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
