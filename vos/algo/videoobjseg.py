@@ -23,6 +23,7 @@ class VideoObjSegAlgo(AlgoBase):
             contour_weight= 1.0,
             train_step_kwargs= dict(),
             eval_step_kwargs= dict(),
+            include_bg_loss= False,
             **kwargs,
         ):
         save__init__args(locals())
@@ -81,7 +82,8 @@ class VideoObjSegAlgo(AlgoBase):
         preds = preds.cpu().numpy()
         gtruths = data["mask"].cpu().numpy()
 
-        performance_status = self.calc_performance(preds, gtruths)
+        loss_idx = 0 if self.include_bg_loss else 1
+        performance_status = self.calc_performance(preds[:,:, loss_idx:], gtruths[:,:, loss_idx:])
     
         return TrainInfo(
                 loss= loss.detach().cpu().numpy(), 
@@ -115,7 +117,8 @@ class VideoObjSegAlgo(AlgoBase):
         preds = preds.cpu().numpy()
         gtruths = data["mask"].cpu().numpy()
 
-        performance_status = self.calc_performance(preds, gtruths)
+        loss_idx = 0 if self.include_bg_loss else 1
+        performance_status = self.calc_performance(preds[:,:, loss_idx:], gtruths[:,:, loss_idx:])
 
         return EvalInfo(
                 loss= loss.cpu().numpy(),

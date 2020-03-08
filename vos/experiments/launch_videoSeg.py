@@ -119,8 +119,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [True, ],
-        # [False, ],
+        # [True, ],
+        [False, ],
     ]
     dir_names = ["active_bn-{}".format(*v) for v in values]
     keys = [
@@ -129,8 +129,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [True, ],
-        # [False, ],
+        # [True, ],
+        [False, ],
     ]
     dir_names = ["bg_loss-{}".format(*v) for v in values]
     keys = [
