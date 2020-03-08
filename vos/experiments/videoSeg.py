@@ -17,11 +17,8 @@ from vos.models.EMN import EMN
 from vos.algo.emn_train import EMNAlgo
 
 from vos.runner.two_stage import TwoStageRunner
-<<<<<<< HEAD
 from vos.utils.conbine_affinities import conbine_affinity
-=======
 from vos.utils.helpers import load_snapshot
->>>>>>> master
 
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
