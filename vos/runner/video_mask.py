@@ -11,14 +11,15 @@ class VideoMaskRunner(RunnerBase):
         videos: numpy.ndarray with shape (b, t, C, H, W)
         preds: numpy.ndarray with shape (b, t, n, H, W) with one-hot encoding
     """
-    def _store_extra_info(self, itr_i, extra_info, n_select_frames= 1):
+    def __init__(self, **kwargs):
+        super(VideoMaskRunner, self).__init__(**kwargs)
+        self._extra_infos = None
+        self._eval_extra_infos = None
+
+    def _store_extra_info(self, itr_i, extra_info, n_select_frames= 1, evaluate= False):
         """ For the memory efficiency, this will only randomly choose `n_select_frames` of frames
         to store.
         """
-        if not hasattr(self, "_extra_infos") or self._extra_infos is None:
-            # a hacky way of initialization
-            self._extra_infos = {k: list() for k in ["images", "masks", "preds"]}
-
         videos = extra_info["videos"]
         masks = extra_info["masks"]
         preds = extra_info["preds"]
@@ -37,36 +38,58 @@ class VideoMaskRunner(RunnerBase):
         masks = masks.reshape((-1, N, H, W))
         preds = preds.reshape((-1, n, H, W)) # (1, C, H, B*W)
 
-        self._extra_infos["images"].extend([image for image in images])
-        self._extra_infos["masks"].extend([mask for mask in masks])
-        self._extra_infos["preds"].extend([pred for pred in preds])
+        if not evaluate:
+            if self._extra_infos is None:
+                # a hacky way of initialization
+                self._extra_infos = {k: list() for k in ["images", "masks", "preds"]}
+            self._extra_infos["images"].extend([image for image in images])
+            self._extra_infos["masks"].extend([mask for mask in masks])
+            self._extra_infos["preds"].extend([pred for pred in preds])
+        else:
+            if self._eval_extra_infos is None:
+                # a hacky way of initialization
+                self._eval_extra_infos = {k: list() for k in ["images", "masks", "preds"]}
+            self._eval_extra_infos["images"].extend([image for image in images])
+            self._eval_extra_infos["masks"].extend([mask for mask in masks])
+            self._eval_extra_infos["preds"].extend([pred for pred in preds])
 
-    def _log_extra_info(self, itr_i):
+    def _log_extra_info(self, itr_i, evaluate= False):
         # transpose from (b, C, H, W) to (1, H, b*W, C)
-        images = np.stack(self._extra_infos["images"], axis= 0)
-        masks = np.stack(self._extra_infos["masks"], axis= 0)
-        preds = np.stack(self._extra_infos["preds"], axis= 0)
+        if evaluate and not self._eval_extra_infos is None:
+            images = np.stack(self._eval_extra_infos["images"], axis= 0)
+            masks = np.stack(self._eval_extra_infos["masks"], axis= 0)
+            preds = np.stack(self._eval_extra_infos["preds"], axis= 0)
+        elif not evaluate and not self._extra_infos is None:
+            images = np.stack(self._extra_infos["images"], axis= 0)
+            masks = np.stack(self._extra_infos["masks"], axis= 0)
+            preds = np.stack(self._extra_infos["preds"], axis= 0)
+        else:
+            return
         s_images = stack_images(images) # (1, C, H, b*W)
         s_masks = stack_masks(masks) # (1, 1, b*H, N*W)
         s_preds = stack_masks(preds)
 
         # write to summary file
-        tf_image_summary("input images",
+        tf_image_summary(("Eval " if evaluate else "") + "input images",
             data= s_images.transpose(0,2,3,1),
             step= itr_i
         )
-        tf_image_summary("ground truths",
+        tf_image_summary(("Eval " if evaluate else "") + "ground truths",
             data= s_masks.transpose(0,2,3,1) * 255,
             step= itr_i
         )
-        tf_image_summary("predictions",
+        tf_image_summary(("Eval " if evaluate else "") + "predictions",
             data= s_preds.transpose(0,2,3,1) * 255,
             step= itr_i
         )
 
         # reset
-        del self._extra_infos
-        self._extra_infos = None
+        if evaluate:
+            del self._eval_extra_infos
+            self._eval_extra_infos = None
+        else:
+            del self._extra_infos
+            self._extra_infos = None
         
     def log_data_info(self, itr_i, data, n_select_frames= 1):
         """ In case of data pre-processing bugs, log images into tensorflow

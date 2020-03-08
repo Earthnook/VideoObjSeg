@@ -25,15 +25,16 @@ class TwoStageRunner(VideoMaskRunner):
 
     def store_train_info(self, itr_i, train_info, extra_info):
         super(TwoStageRunner, self).store_train_info(itr_i, train_info, extra_info)
-        self._store_extra_info(itr_i, extra_info)
+        self._store_extra_info(itr_i, extra_info, evaluate= False)
 
     def store_eval_info(self, itr_i, eval_info, extra_info):
         super(TwoStageRunner, self).store_eval_info(itr_i, eval_info, extra_info)
-        self._store_extra_info(itr_i, extra_info)
+        self._store_extra_info(itr_i, extra_info, evaluate= True)
 
     def log_diagnostic(self, itr_i):
         super(TwoStageRunner, self).log_diagnostic(itr_i)
-        self._log_extra_info(itr_i)
+        self._log_extra_info(itr_i, evaluate= False)
+        self._log_extra_info(itr_i, evaluate= True)
 
     def _train_loops(self,
             dataloader,
