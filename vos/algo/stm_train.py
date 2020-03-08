@@ -32,7 +32,6 @@ class STMAlgo(VideoObjSegAlgo):
 
         estimates = torch.zeros_like(masks, dtype= torch.float32)
         logits = torch.zeros_like(masks, dtype= torch.float32)
-        b, t, n, H, W = masks.shape
         estimates[:, 0] = masks[:, 0]
 
         for t in range(1, n_frames):
@@ -68,7 +67,9 @@ class STMAlgo(VideoObjSegAlgo):
 
         # select loss calculation
         loss_idx = 0 if self.include_bg_loss else 1
-        
+        b, t, n, H, W = masks.shape
+        p = estimates[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        g = masks[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W).to(dtype= torch.float32)
 
         # calculate loss and return
-        return pred, self.loss_fn(logits[:,1:, loss_idx:], masks[:,1:, loss_idx:]) # only query frames are used
+        return pred, self.loss_fn(p, g) # only query frames are used

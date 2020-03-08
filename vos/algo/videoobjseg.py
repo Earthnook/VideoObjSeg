@@ -19,7 +19,7 @@ class VideoObjSegAlgo(AlgoBase):
 
     def __init__(self,
             clip_grad_norm= 1e9,
-            loss_fn= CrossEntropyOneHot(),
+            loss_fn= nn.BCELoss(),
             contour_weight= 1.0,
             train_step_kwargs= dict(),
             eval_step_kwargs= dict(),
@@ -83,7 +83,10 @@ class VideoObjSegAlgo(AlgoBase):
         gtruths = data["mask"].cpu().numpy()
 
         loss_idx = 0 if self.include_bg_loss else 1
-        performance_status = self.calc_performance(preds[:,:, loss_idx:], gtruths[:,:, loss_idx:])
+        _, _, n, H, W = gtruths.shape
+        p = preds[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        g = gtruths[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        performance_status = self.calc_performance(p, g)
     
         return TrainInfo(
                 loss= loss.detach().cpu().numpy(), 
@@ -118,7 +121,10 @@ class VideoObjSegAlgo(AlgoBase):
         gtruths = data["mask"].cpu().numpy()
 
         loss_idx = 0 if self.include_bg_loss else 1
-        performance_status = self.calc_performance(preds[:,:, loss_idx:], gtruths[:,:, loss_idx:])
+        _, _, n, H, W = gtruths.shape
+        p = preds[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        g = gtruths[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        performance_status = self.calc_performance(p, g)
 
         return EvalInfo(
                 loss= loss.cpu().numpy(),
