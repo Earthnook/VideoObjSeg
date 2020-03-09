@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-class SiamQueryEncoder(nn.Module):
+class SiamQueryEncoder(STM.Encoder_Q):
     """ Siamese query encoder.
     Considering saving the memory, expand operation will be done here.
         And all output tensors will have leading dim (b*no, )
@@ -20,7 +20,7 @@ class SiamQueryEncoder(nn.Module):
             frame: torch.Tensor with shape (b, C, H, W)
             target_image: torch.Tensor with shape (b, no, C, h, w) which is a cropped image
         @ Returns:
-            feat: torch.Tensor with shape (b*no, c, h, w)
+            feat: torch.Tensor with shape (b*no, c, h', w')
             other tensors are also with (b*no) as leading dimension
         """
 
@@ -54,13 +54,13 @@ class SiamQueryEncoder(nn.Module):
         r4e = r4.unsqueeze(1).expand(b, no,-1,-1,-1)
         r3e = r3.unsqueeze(1).expand(b, no,-1,-1,-1)
         r2e = r2.unsqueeze(1).expand(b, no,-1,-1,-1)
-        r4e = r4e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
+        r4e = r4e.contiguous().view(b*no, r4e.shape[2],r4e.shape[3],r4e.shape[4])
         r3e = r3e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
         r2e = r2e.contiguous().view(b*no, r2e.shape[2],r2e.shape[3],r2e.shape[4])
 
-        feat = conv2d_dw_corr(r4, r4_tar)
+        feat = conv2d_dw_corr(r4e, r4_tar)
 
-        return feat, r3, r2
+        return feat, r3e, r2e
 
 class conv2DBatchNormRelu(nn.Module):
     """ Code copied from

@@ -25,7 +25,7 @@ could be smaller.
         img_e = image.unsqueeze(1).expand(B, n_objects, -1,-1,-1) # (B, no, C, H, W)
         mask_e = mask[:, 1:n_objects+1].unsqueeze(2).expand(-1,-1, C, -1,-1) # (B, no, C, H, W)
 
-        target_images = img_e * mask_e
+        target_images = img_e * mask_e.type_as(img_e)
     b, no, c, h, w = target_images.shape
     img = target_images.view(-1, c, h, w)
     [img], _ = pad_divide_by([img], 16, (h, w))
@@ -97,4 +97,12 @@ class EMNAlgo(VideoObjSegAlgo):
 
         pred = (estimates.detach() == estimates.detach().max(dim= 1, keepdim= True)[0])
         pred = pred.to(dtype= torch.uint8)
-        return pred, self.loss_fn(logits[:, 1:], masks[:, 1:]) # only query frames are used
+
+        # select loss calculation
+        loss_idx = 0 if self.include_bg_loss else 1
+        b, t, n, H, W = masks.shape
+        p = estimates[:,1:,loss_idx:].reshape(-1, H, W)
+        g = masks[:,1:,loss_idx:].reshape(-1, H, W).to(dtype= torch.float32)
+
+        # calculate loss and return
+        return pred, self.loss_fn(p, g) # only query frames are used

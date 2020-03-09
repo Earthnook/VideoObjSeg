@@ -42,8 +42,14 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         **config["random_subset_kwargs"]
     )
 
-    model = DataParallel(STM(**config["model_kwargs"]))
-    algo = STMAlgo(**config["algo_kwargs"])
+    if config["solution"] == "STM":
+        model = DataParallel(STM(**config["model_kwargs"]))
+        algo = STMAlgo(**config["algo_kwargs"])
+    elif config["solution"] == "EMN":
+        model = DataParallel(EMN(**config["model_kwargs"]))
+        algo = EMNAlgo(**config["algo_kwargs"])
+    else:
+        raise NotImplementedError("Cannnot deploy proper neural network solution")
 
     # load parameters if available
     itr_i = load_snapshot(log_dir, run_ID, model, algo)

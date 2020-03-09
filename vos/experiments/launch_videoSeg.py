@@ -12,6 +12,7 @@ def get_default_config():
     exp_image_size= (384, 384)
     return dict(
         exp_image_size= exp_image_size,
+        solution= "STM",
         pretrain_dataset_kwargs = dict(
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
@@ -120,19 +121,18 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [True, ],
-        [False, ],
+        ["EMN", ],
+        # ["STM", ],
     ]
-    # dir_names = ["active_bn-{}".format(*v) for v in values]
-    dir_names = ["" for _ in values]
+    dir_names = ["NN{}".format(*v) for v in values]
     keys = [
-        ("model_kwargs", "train_bn"),
+        ("solution", ),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [True, 1],
-        # [True, 3],
+        # [True, 1],
+        [True, 3],
         # [False, 4],
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]
@@ -143,8 +143,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1, 1],
-        # [4, 4],
+        # [1, 1],
+        [4, 4],
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [
