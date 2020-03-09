@@ -15,11 +15,13 @@ class COCO(data.Dataset):
             mode= "train", # choose between "train", "val"
             is_subset= False, # If is subset, the length will be a fixed small length
             max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
+            sort_anns= False, # Due to multiple anns, sort the anns to get masks as big as possible
         ):
         self._root = root
         self._mode = mode
         self._is_subset = is_subset
         self._max_n_objects = max_n_objects
+        self._sort_anns= sort_anns
 
         self.coco = COCOapi(
             path.join(self._root, "annotations/instances_{}2017.json".format(self._mode))
@@ -97,6 +99,9 @@ class COCO(data.Dataset):
 
         annIds = self.coco.getAnnIds(imgIds= img["id"])
         anns = self.coco.loadAnns(annIds)
+        if self._sort_anns:
+            # put the masks with greatest area at 0-th
+            anns.sort(key= lambda x: x["area"], reverse= True)
 
         # incase of gray-scale image
         if len(image.shape) == 2:

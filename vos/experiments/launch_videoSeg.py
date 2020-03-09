@@ -16,6 +16,7 @@ def get_default_config():
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
             max_n_objects= 8,
+            sort_anns= False,
         ),
         train_dataset_kwargs = dict(
             root= dataset_root_path,
@@ -122,19 +123,21 @@ def main(args):
         # [True, ],
         [False, ],
     ]
-    dir_names = ["active_bn-{}".format(*v) for v in values]
+    # dir_names = ["active_bn-{}".format(*v) for v in values]
+    dir_names = ["" for _ in values]
     keys = [
         ("model_kwargs", "train_bn"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [True, ],
-        [False, ],
+        [True, 1],
+        # [False, 4],
     ]
-    dir_names = ["bg_loss-{}".format(*v) for v in values]
+    dir_names = ["big_objects-{}{}".format(*v) for v in values]
     keys = [
-        ("algo_kwargs", "include_bg_loss"),
+        ("pretrain_dataset_kwargs", "sort_anns"),
+        ("pretrain_dataset_kwargs", "max_n_objects"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
