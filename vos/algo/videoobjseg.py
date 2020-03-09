@@ -59,7 +59,7 @@ class VideoObjSegAlgo(AlgoBase):
         contour_acc = (np.reciprocal(self.contour_weight**2) + 1) * \
             (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate)
 
-        return dict(IoU= np.average(IoU), contour_acc= np.average(contour_acc))
+        return dict(IoU= np.nanmean(IoU), contour_acc= np.nanmean(contour_acc))
 
     def train(self, optim_i, data):
         """
