@@ -95,9 +95,9 @@ class VideoObjSegAlgo(AlgoBase):
                 contour_acc= performance_status["contour_acc"],
             ), \
             dict(
-                videos= data["video"].cpu().numpy(),
-                masks= data["mask"].cpu().numpy(),
-                preds= preds,
+                videos= data["video"].cpu().numpy()[:,1:],
+                masks= data["mask"].cpu().numpy()[:,1:],
+                preds= preds[:,1:],
                 n_objects= data["n_objects"]
             )
 
@@ -132,8 +132,8 @@ class VideoObjSegAlgo(AlgoBase):
                 contour_acc= performance_status["contour_acc"],
             ), \
             dict(
-                videos= data["video"].cpu().numpy(),
-                masks= data["mask"].cpu().numpy(),
-                preds= preds,
+                videos= data["video"].cpu().numpy()[:,1:],
+                masks= data["mask"].cpu().numpy()[:,1:],
+                preds= preds[:,1:],
                 n_objects= data["n_objects"]
             )
