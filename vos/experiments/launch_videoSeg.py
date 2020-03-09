@@ -132,6 +132,7 @@ def main(args):
 
     values = [
         [True, 1],
+        # [True, 3],
         # [False, 4],
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]

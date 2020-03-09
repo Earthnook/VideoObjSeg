@@ -41,24 +41,25 @@ class VideoObjSegAlgo(AlgoBase):
         raise NotImplementedError
 
     def calc_performance(self, pred, gtruth):
-        """ Given the statistics, calculate the performace in terms of object segmentation.
-        All inputs should be np.ndarray with the same shape and one-hot encoding.
+        """ Given the statistics (in same shape (N, ...)) and caculate average value in this batch
+            NOTE: the average is only taken on 0-th dimension
             Calculation refering to book: 
             Pattern Recognition and Computer Vision: Second Chinese Conference, PRCV page 423
         """
-        gtruth = gtruth.astype(np.uint8)
-        pred = pred.astype(np.uint8)
+        N = pred.shape[0]
+        gtruth = gtruth.astype(np.uint8).reshape(N, -1)
+        pred = pred.astype(np.uint8).reshape(N, -1)
         # calculate region similarity (a.k.a Intersection over Unit)
-        IoU = np.sum(gtruth & pred) / np.sum(gtruth | pred)
+        IoU = np.sum(gtruth & pred, axis= 1) / np.sum(gtruth | pred, axis= 1)
 
         # calculate contour accuracy
-        intersect = np.sum(pred & gtruth)
-        accuracy_rate = intersect / np.sum(pred)
-        recall_rate = intersect / np.sum(gtruth)
+        intersect = np.sum(gtruth & pred, axis= 1)
+        accuracy_rate = intersect / np.sum(pred, axis= 1)
+        recall_rate = intersect / np.sum(gtruth, axis= 1)
         contour_acc = (np.reciprocal(self.contour_weight**2) + 1) * \
             (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate)
 
-        return dict(IoU= IoU, contour_acc= contour_acc)
+        return dict(IoU= np.average(IoU), contour_acc= np.average(contour_acc))
 
     def train(self, optim_i, data):
         """
@@ -83,8 +84,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         loss_idx = 0 if self.include_bg_loss else 1
         _, _, n, H, W = gtruths.shape
-        p = preds[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
-        g = gtruths[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        p = preds[:,1:,loss_idx:].reshape(-1, H, W)
+        g = gtruths[:,1:,loss_idx:].reshape(-1, H, W)
         performance_status = self.calc_performance(p, g)
     
         return TrainInfo(
@@ -121,8 +122,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         loss_idx = 0 if self.include_bg_loss else 1
         _, _, n, H, W = gtruths.shape
-        p = preds[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
-        g = gtruths[:,1:,loss_idx:].reshape(-1, n-loss_idx, H, W)
+        p = preds[:,1:,loss_idx:].reshape(-1, H, W)
+        g = gtruths[:,1:,loss_idx:].reshape(-1, H, W)
         performance_status = self.calc_performance(p, g)
 
         return EvalInfo(
