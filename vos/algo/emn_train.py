@@ -95,7 +95,7 @@ class EMNAlgo(VideoObjSegAlgo):
             if t-1 in to_memorize:
                 keys, values = this_keys, this_values
 
-        pred = (estimates.detach() == estimates.detach().max(dim= 1, keepdim= True)[0])
+        pred = (estimates.detach() == estimates.detach().max(dim= 2, keepdim= True)[0])
         pred = pred.to(dtype= torch.uint8)
 
         # select loss calculation
