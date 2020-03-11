@@ -113,7 +113,7 @@ class RunnerBase:
         self._train_infos = {k: list() for k in self._train_infos}
         
         for k, v in self._eval_infos.items():
-            if not k.startswith("_"):
+            if not (k.startswith("_") or len(v) == 0):
                 logger.record_tabular_misc_stat("Eval"+k, v, itr_i)
         self._eval_infos = {k: list() for k in self._eval_infos}
 
