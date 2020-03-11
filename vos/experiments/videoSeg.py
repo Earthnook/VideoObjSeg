@@ -17,13 +17,18 @@ from vos.models.EMN import EMN
 from vos.algo.emn_train import EMNAlgo
 
 from vos.runner.two_stage import TwoStageRunner
+from vos.utils.conbine_affinities import conbine_affinity
 from vos.utils.helpers import load_snapshot
 
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
 
 def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
+    # Considering the batch size, You have to provide at least 4 gpus for
+    # this experiment.
     affinity = affinity_from_code(affinity_code)
+    if isinstance(affinity, list):
+        affinity = conbine_affinity(affinity)
     config = load_variant(log_dir)
 
     # build the components for the experiment and run

@@ -84,7 +84,11 @@ def get_default_config():
 
 def main(args):
     experiment_title = "video_segmentation"
-    affinity_code = quick_affinity_code(n_parallel= 1)
+    affinity_code = encode_affinity(
+        n_cpu_core= 48,
+        n_gpu= 8,
+        gpu_per_run= 4,
+    )
     default_config = get_default_config()
 
     # set up variants
