@@ -105,16 +105,16 @@ class RunnerBase:
         """ write all informations into exact files using logging method
         """
         self.save_epoch_snapshot(itr_i)
-        logger.record_tabular("Optim_itr", itr_i)
+        logger.record_tabular("Optim_itr", itr_i, itr_i)
 
         for k, v in self._train_infos.items():
             if not k.startswith("_"):
-                logger.record_tabular_misc_stat(k, v)
+                logger.record_tabular_misc_stat(k, v, itr_i)
         self._train_infos = {k: list() for k in self._train_infos}
         
         for k, v in self._eval_infos.items():
             if not k.startswith("_"):
-                logger.record_tabular_misc_stat("Eval"+k, v)
+                logger.record_tabular_misc_stat("Eval"+k, v, itr_i)
         self._eval_infos = {k: list() for k in self._eval_infos}
 
         logger.dump_tabular()
