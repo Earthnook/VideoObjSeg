@@ -48,8 +48,6 @@ class RunnerBase:
             f"{torch.get_num_threads()}.")
 
         # configure cuda for this experiment
-        os.environ['CUDA_VISIBLE_DEVICES'] = \
-            ",".join([str(i) for i in self.affinity.get("cuda_idx", [])])
         logger.log(f"Runner {getattr(self, 'rank', '')} CUDA_VISIBLE_DEVICES: "
             f"{os.environ['CUDA_VISIBLE_DEVICES']}.")
 

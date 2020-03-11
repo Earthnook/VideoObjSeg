@@ -1,7 +1,8 @@
 """ The script that runs the experiment
 """
 import sys
-from exptools.launching.affinity import affinity_from_code
+import os
+from exptools.launching.affinity import affinity_from_code, set_gpu_from_visibles
 from exptools.launching.variant import load_variant
 from exptools.logging.context import logger_context
 
@@ -29,6 +30,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     affinity = affinity_from_code(affinity_code)
     if isinstance(affinity, list):
         affinity = conbine_affinity(affinity)
+    set_gpu_from_visibles(affinity.get("cuda_idx", 0))
     config = load_variant(log_dir)
 
     # build the components for the experiment and run
