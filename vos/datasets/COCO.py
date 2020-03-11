@@ -112,6 +112,9 @@ class COCO(data.Dataset):
             raise ValueError("Wrong image shape dimensions\n{}".format(str(img)))
         H, W, _ = image.shape
 
+        # create a bounding box array with (idx0, idx1, H, W) notion.
+        # NOTE: it is a bit different from COCO image for the simplicity
+        bboxs = np.zeros((self._max_n_objects, 4), dtype= np.float32)
         mask = np.zeros((H, W, self._max_n_objects), dtype= np.uint8)
         bg = np.ones((H, W, 1), dtype= np.uint8) # a background
 
@@ -121,9 +124,17 @@ class COCO(data.Dataset):
             specific index.
             """
             if n_objects >= self._max_n_objects: break
+
             ann_mask = self.coco.annToMask(ann)
             mask[:, :, ann_i] = ann_mask
             bg[:, :, 0] &= (1-ann_mask)
+
+            coco_box = ann["bbox"]
+            bboxs[ann_i, 0] = coco_box[1]
+            bboxs[ann_i, 1] = coco_box[0]
+            bboxs[ann_i, 2] = coco_box[3]
+            bboxs[ann_i, 3] = coco_box[2]
+
             n_objects += 1
         mask = np.concatenate([bg, mask], axis= 2)
 
@@ -135,6 +146,7 @@ class COCO(data.Dataset):
             image= torch.from_numpy(image), # pixel in [0, 1] scale
             mask= torch.from_numpy(mask), # NOTE: 0-th dimension of mask is (n_cats+1), 
                 # the order of the mas depends on self._supNms or self._catNms
+            bboxs= bboxs,
             n_objects= torch.tensor(n_objects),
         )
 

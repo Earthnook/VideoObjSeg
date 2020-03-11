@@ -2,8 +2,9 @@
 """
 from torch.nn import functional as F
 
-def conv2d_dw_corr(x, temp):
+def conv2d_dw_group(x, temp):
     """ A batch-wise 2d image correlation in terms of vectors in channel dimension.
+    from https://github.com/foolwood/SiamMask/blob/0eaac33050fdcda81c9a25aa307fffa74c182e36/models/rpn.py#L32
     @ Args:
         x: input tensor with shape (b, C, H, W)
         temp: template with shape (b, C, h, w)

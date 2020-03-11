@@ -1,5 +1,5 @@
 from vos.models import STM
-from vos.models.correlation import conv2d_dw_corr
+from vos.models.correlation import conv2d_dw_group
 from vos.utils.helpers import pad_divide_by
 
 import torch
@@ -58,9 +58,12 @@ class SiamQueryEncoder(STM.Encoder_Q):
         r3e = r3e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
         r2e = r2e.contiguous().view(b*no, r2e.shape[2],r2e.shape[3],r2e.shape[4])
 
-        feat = conv2d_dw_corr(r4e, r4_tar)
+        feat = conv2d_dw_group(r4e, r4_tar)
+        c_feat = torch.cat(
+            (r4e, feat), dim= 1, # along channel dim.
+        )
 
-        return feat, r3e, r2e
+        return c_feat, r3e, r2e
 
 class conv2DBatchNormRelu(nn.Module):
     """ Code copied from
@@ -204,6 +207,7 @@ class EMN(STM.STM):
     def __init__(self, **kwargs):
         super(EMN, self).__init__()
         self.Encoder_Q = SiamQueryEncoder()
+        self.KV_Q_r4 = STM.KeyValue(2048, keydim= 128, valdim=512)
         self.Decoder = Decoder(1024, 256)
 
     def segment(self, frame, keys, values, num_objects, target_image):
