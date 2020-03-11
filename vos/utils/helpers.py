@@ -20,6 +20,7 @@ import time
 import os
 import copy
 
+from exptools.logging import logger
 
 def ToCuda(xs):
     # move the tensor to cuda
@@ -108,19 +109,26 @@ def overlay_images(images, masks, alpha= 0.4):
 
 def load_snapshot(logdir, run_ID, model, algo):
     """ find proper snapshot file and load state dict to them
-    NOTE: the file name is hard coded here, please make sure
+    NOTE: the file name is hard coded here, please make sure. Or this might not be the file
+    you want to load.
     """
+    rundir = os.path.join(logdir, f"run_{run_ID}")
     try:
-        files = [f for f in os.listdir(os.path.join(logdir, f"run_{run_ID}")) \
-                if os.path.isfile(f) and ".pkl" in f]
+        files = [f for f in os.listdir(rundir) \
+                if os.path.isfile(os.path.join(rundir, f)) \
+                    and ".pkl" in f]
     except FileNotFoundError:
+        logger.log("Directory not found, didn't load snapshot")
         return 0
     if len(files) < 1:
+        logger.log("File not found, didn't load snapshot")
         return 0
     # Assuming there is only 1 .pkl file
-    states = torch.load(os.path.join(logdir, files[0]))
+    states = torch.load(os.path.join(rundir, files[0]))
     model.load_state_dict(states["model_state_dict"])
     algo.load_state_dict(states["algo_state_dict"])
+
+    logger.log("snapshot loaded at iteration {}".format(states["itr_i"]))
     return states["itr_i"]
 
 def stack_images(images):

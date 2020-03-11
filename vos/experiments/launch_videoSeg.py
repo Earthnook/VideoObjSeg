@@ -90,12 +90,8 @@ def main(args):
     variant_levels = list()
 
     values = [
+        # [0., 38., 0.05, 0.,],
         [5, 5, 0.05, 5],
-        # [15, 15, 0.08, 10],
-        # [30, 30, 0.1, 10],
-        # [30, 50, 0.1, 20]
-        # [45, 50, 0.4, 30],
-        # [90, 50, 2., 50],
     ]
     dir_names = ["affine{}-{}-{}-{}".format(*v) for v in values]
     keys = [
@@ -121,19 +117,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [True, ],
-        [False, ],
-    ]
-    # dir_names = ["active_bn-{}".format(*v) for v in values]
-    dir_names = ["" for _ in values]
-    keys = [
-        ("model_kwargs", "train_bn"),
-    ]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
-        [True, 1],
-        # [True, 3],
+        # [True, 1],
+        [True, 3],
         # [False, 4],
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]
@@ -144,8 +129,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1, 1],
-        # [4, 4],
+        # [1, 1],
+        [4, 4],
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [
