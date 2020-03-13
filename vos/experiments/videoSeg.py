@@ -59,7 +59,8 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         raise NotImplementedError("Cannnot deploy proper neural network solution")
 
     # load parameters if available
-    itr_i = load_snapshot(log_dir, run_ID, model, algo)
+    # itr_i = load_snapshot(log_dir, run_ID, model, algo)
+    itr_i = 0
 
     runner = TwoStageRunner(
         affinity= affinity,
