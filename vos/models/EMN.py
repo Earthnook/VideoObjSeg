@@ -58,10 +58,10 @@ class SiamQueryEncoder(STM.Encoder_Q):
         r3e = r3e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
         r2e = r2e.contiguous().view(b*no, r2e.shape[2],r2e.shape[3],r2e.shape[4])
 
-        feat = conv2d_dw_group(r4e, r4_tar)
+        feat = conv2d_dw_group(r4e, r4_tar, pad= True) # same shape as r4e
         c_feat = torch.cat(
             (r4e, feat), dim= 1, # along channel dim.
-        )
+        ) # C == 2048
 
         return c_feat, r3e, r2e
 
