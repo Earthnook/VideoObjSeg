@@ -1,24 +1,13 @@
 from __future__ import division
 #torch
 import torch
-from torch.autograd import Variable
-from torch.utils import data
-
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
-import torch.utils.model_zoo as model_zoo
-from torchvision import models
 
 # general libs
 import cv2
 import matplotlib
-import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
-import time
 import os
-import copy
 
 from exptools.logging import logger
 
@@ -158,3 +147,14 @@ def stack_masks(masks):
     masks = masks.reshape(1,1,b*H, N*W)
     return masks
     
+def extract_bboxs(masks):
+    """ Given masks (b, H, W) with 0,1 encoding, extract masks that sits in this
+    image size.
+        Return a np array with shape (b, 4) as bounding boxes
+    """
+    b, H, W = masks.shape
+    bboxs = np.zeros((b, 4), dtype= np.int32)
+    for i, mask in enumerate(masks):
+        Widx, Hidx, Wlen, Hlen = cv2.boundingRect(mask)
+        bboxs[i] = [Hidx, Widx, Hlen, Wlen]
+    return bboxs

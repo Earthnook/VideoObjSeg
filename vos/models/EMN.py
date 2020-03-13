@@ -14,11 +14,11 @@ class SiamQueryEncoder(STM.Encoder_Q):
     def __init__(self, train_bn= True):
         super(SiamQueryEncoder, self).__init__()
 
-    def forward(self, in_f, target_image):
+    def forward(self, in_f, target):
         """
         @ Args:
             frame: torch.Tensor with shape (b, C, H, W)
-            target_image: torch.Tensor with shape (b, no, C, h, w) which is a cropped image
+            target: torch.Tensor with shape (b, no, C, h, w) which is a cropped image
         @ Returns:
             feat: torch.Tensor with shape (b*no, c, h', w')
             other tensors are also with (b*no) as leading dimension
@@ -35,13 +35,13 @@ class SiamQueryEncoder(STM.Encoder_Q):
         r4 = self.res4(r3) # 1/8, 1024
 
         # calculating feature from cropped target image
-        b, no = target_image.shape[:2]
-        target_image = target_image.view(b*no,
-            target_image.shape[2],
-            target_image.shape[3],
-            target_image.shape[4]
+        b, no = target.shape[:2]
+        target = target.view(b*no,
+            target.shape[2],
+            target.shape[3],
+            target.shape[4]
         )
-        f_tar = (target_image - self.mean) / self.std
+        f_tar = (target - self.mean) / self.std
         x_tar = self.conv1(f_tar) 
         x_tar = self.bn1(x_tar)
         c1_tar = self.relu(x_tar)   # 1/2, 64
@@ -210,8 +210,14 @@ class EMN(STM.STM):
         self.KV_Q_r4 = STM.KeyValue(2048, keydim= 128, valdim=512)
         self.Decoder = Decoder(1024, 256)
 
-    def segment(self, frame, keys, values, num_objects, target_image):
-        """ NOTE: target_image must has shape (B, no, C, H, W) where no is the max of num_objects.
+    def segment(self,
+            frame,
+            keys, values,
+            num_objects,
+            target
+        ):
+        """ NOTE: targets must has shape (B, K', C, H, W) where K' >= num_objects
+        And target_bboxs has shape (B, K, 4) in (H, W, Hlen, Wlen) order
         """
         # if num_objects == 0, treat as 1 object
         num_objects = max(num_objects.max().item(), 1)
@@ -219,9 +225,8 @@ class EMN(STM.STM):
         B, K, valuedim, _, _, _ = values.shape
         # pad
         [frame], pad = pad_divide_by([frame], 16, (frame.size()[2], frame.size()[3]))
-        # now target_image has shape (B, no, C, ..., ...)
 
-        r4e, r3e, r2e = self.Encoder_Q(frame, target_image) # B*no, dim, ...
+        r4e, r3e, r2e = self.Encoder_Q(frame, target[:,:num_objects]) # B*no, dim, ...
         k4e, v4e = self.KV_Q_r4(r4e)   # B*no, dim, H/16, W/16
 
         # memory select kv: (B*no, C, T, H, W)

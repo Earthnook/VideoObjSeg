@@ -61,7 +61,7 @@ class VideoObjSegAlgo(AlgoBase):
 
         return dict(IoU= np.nanmean(IoU), contour_acc= np.nanmean(contour_acc))
 
-    def train(self, optim_i, data):
+    def train(self, itr_i, data):
         """
         @ Args:
             data: a dictionary with following keys
@@ -102,7 +102,7 @@ class VideoObjSegAlgo(AlgoBase):
             )
 
 
-    def eval(self, optim_i, data):
+    def eval(self, itr_i, data):
         """
         @ Args:
             data: a dictionary with following keys
