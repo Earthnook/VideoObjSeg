@@ -5,7 +5,7 @@ from torchvision.transforms import functional as visionF
 import numpy as np
 
 from vos.utils.quick_args import save__init__args
-from vos.utils.image_shaper import random_crop_CHW
+from vos.utils.image_shaper import random_crop
 
 class VideoSynthDataset(Dataset):
     """ A wrapper that synthesize image dataset to a video-like dataset by randomly jitter
@@ -113,7 +113,9 @@ class VideoSynthDataset(Dataset):
         video, m_video = video[0], m_video[0]
 
         if self.resize_method == "crop":
-            cropped, _ = random_crop_CHW(self.resolution, (video, m_video))
+            cropped, _ = random_crop(self.resolution, 
+                images= (video, m_video)
+            )
             video, m_video = cropped
         elif self.resize_method == "resize":
             raise NotImplementedError # put here for later implementation
