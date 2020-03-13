@@ -39,10 +39,7 @@ class RandomSubset(Dataset):
             self.sample_subset()
 
         if self._resize_method == "crop":
-            cropped, _ = random_crop(self._resolution,
-                images= (item["video"], item["mask"])
-            )
-            item["video"], item["mask"] = cropped
+            item["video"], item["mask"] = random_crop(self._resolution, item["video"], item["mask"])
         elif self._resize_method == "resize":
             raise NotImplementedError # put here for later implementation
         else:
