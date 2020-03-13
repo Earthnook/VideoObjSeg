@@ -64,7 +64,8 @@ class FrameSkipDataset(Dataset):
         mask = self.clip_video(item["mask"], sub_idx)
 
         if self._resize_method == "crop":
-            video, mask = random_crop(self._resolution, video, mask)
+            cropped, _ = random_crop(self._resolution, (video, mask))
+            video, mask = cropped
         elif self._resize_method == "resize":
             raise NotImplementedError # put here for later implementation
         else:

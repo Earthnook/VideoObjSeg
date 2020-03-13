@@ -52,6 +52,18 @@ This repo is forked from [STM](https://github.com/seoungwugoh/STM)
 
     b. Evaluation
 
+3. Common definitions
+
+    - **Image** An array with shape `C, H, W` where channel is at first
+
+    - **Bounding Box** A 4-d array with following order: `(Hidx, Widx, Hlen, Wlen)`
+
+        Then, cropping a images by index is like following
+        ```Python
+        image[:, Hidx:Hidx+Hlen, Widx:Widx+Wlen]
+        ```
+        **NOTE** This is the same as cropping array
+
 ## Usage
 
 1. Show demo (evaluation) of [STM paper](https://arxiv.org/abs/1904.00607)

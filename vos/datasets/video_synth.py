@@ -113,8 +113,8 @@ class VideoSynthDataset(Dataset):
         video, m_video = video[0], m_video[0]
 
         if self.resize_method == "crop":
-            c_images = random_crop_CHW(self.resolution, (video, m_video))
-            video, m_video = c_images
+            cropped, _ = random_crop_CHW(self.resolution, (video, m_video))
+            video, m_video = cropped
         elif self.resize_method == "resize":
             raise NotImplementedError # put here for later implementation
         else:
