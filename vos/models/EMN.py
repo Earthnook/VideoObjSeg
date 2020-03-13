@@ -112,6 +112,7 @@ class PyramidPooling(nn.Module):
     def __init__(self, 
             in_channels: int,
             pool_sizes, # A sequence of ints
+            model_name= "pspnet",
             fusion_mode= "cat", 
             is_batchnorm= True,
         ):
@@ -137,6 +138,7 @@ class PyramidPooling(nn.Module):
         self.path_module_list = nn.ModuleList(self.paths)
         self.fusion_mode = fusion_mode
         self.pool_sizes = pool_sizes
+        self.model_name = model_name
     
     def forward(self, x):
         h, w = x.shape[2:]
@@ -184,7 +186,7 @@ class Decoder(STM.Decoder):
         super(Decoder, self).__init__(2*in_channels, mdim)
 
         self.aspp = PyramidPooling(
-            in_channels= 1024, # I infer from the code of STM
+            in_channels= in_channels,
             pool_sizes= [6, 3, 2, 1],
             is_batchnorm= True,
         )

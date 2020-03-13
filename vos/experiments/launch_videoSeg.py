@@ -87,7 +87,7 @@ def main(args):
     affinity_code = encode_affinity(
         n_cpu_core= 48,
         n_gpu= 2,
-        gpu_per_run= 1,
+        gpu_per_run= 2,
     )
     default_config = get_default_config()
 
@@ -122,8 +122,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # ["EMN", ],
-        ["STM", ],
+        ["EMN", ],
+        # ["STM", ],
     ]
     dir_names = ["NN{}".format(*v) for v in values]
     keys = [
@@ -132,8 +132,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [True, 1],
-        # [True, 3],
+        # [True, 1],
+        [True, 3],
         # [False, 4],
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]
@@ -144,8 +144,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1, 1],
-        # [4, 4],
+        # [1, 1],
+        [4, 4],
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [
