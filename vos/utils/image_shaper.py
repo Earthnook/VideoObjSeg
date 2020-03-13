@@ -4,9 +4,14 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 
-def ramdom_padding_CHW(output_size, *images):
-    """ input images must have at least 2 dimensions, which means they are tensors with dim
-    (..., H, W)
+def ramdom_padding_CHW(output_size, images):
+    """ Randomly pad zeros at H and W dimensions depending on output_size
+    @ Args:
+        images: a sequencial object like tuple
+            each element must have at least 2 dimensions, which means they are tensors
+            with dim (..., H, W)
+    @ Returns:
+        0-th: a list of new images processed from your provided images
     """
     oH, oW = output_size
     H, W = images[0].shape[-2], images[0].shape[-1]
@@ -20,19 +25,23 @@ def ramdom_padding_CHW(output_size, *images):
 
     if isinstance(images[0], torch.Tensor):
         pad = (p_left, p_right, p_up, p_down)
-        return [
-            F.pad(image, tuple(pad)) for image in images
-        ]
+        p_images = [F.pad(image, tuple(pad)) for image in images]
+        return p_images
     elif isinstance(images[0], np.ndarray):
         pad = [(0, 0)] * (shape_len - 2) + [(p_up, p_down), (p_left, p_right)]
-        return [
-            np.pad(image, pad_width= pad) for image in images
-        ]
+        p_images = [np.pad(image, pad_width= pad) for image in images]
+        return p_images
     else:
         raise NotImplementedError
 
-def ramdom_padding_HWC(output_size, *images):
-    """ input images must be with dims (H, W, c)
+def ramdom_padding_HWC(output_size, images):
+    """ Randomly pad zeros at H and W dimensions depending on output_size
+    @ Args:
+        images: a sequencial object like tuple
+            each element must have at least 2 dimensions, which means they are tensors
+            with dims (H, W, c)
+    @ Returns:
+        0-th: a list of new images processed from your provided images
     """
     oH, oW = output_size
     H, W, _ = images[0].shape
@@ -46,60 +55,73 @@ def ramdom_padding_HWC(output_size, *images):
 
     if isinstance(images[0], torch.Tensor):
         pad = (p_left, p_right, p_up, p_down)
-        return [
-            F.pad(image, tuple(pad)) for image in images
-        ]
+        p_images = [F.pad(image, tuple(pad)) for image in images]
+        return p_images
     elif isinstance(images[0], np.ndarray):
         pad = [(p_up, p_down), (p_left, p_right), (0, 0)]
-        return [
-            np.pad(image, pad_width= pad) for image in images
-        ]
+        p_images = [np.pad(image, pad_width= pad) for image in images]
+        return p_images
     else:
         raise NotImplementedError
 
-def random_crop(output_size, *images):
-    """ input images must have at least 2 dimensions, which means they are tensors with dim
-    (..., H, W)
+def random_crop(output_size, images):
+    """ Randomly crop images on H and W dimensions depends on output_size. Zero padings
+    will be added randomly if the original size is not big enough.
+    @ Args:
+        images: a sequencial object like tuple
+            each element must have at least 2 dimensions, which means they are tensors
+            with dim (..., H, W)
+    @ Returns:
+        0-th: a list of new images processed from your provided images
     """
     oH, oW = output_size
     H, W = images[0].shape[-2], images[0].shape[-1]
     if oH > H and oW > W:
-        images = ramdom_padding_CHW(output_size, *images)
+        images = ramdom_padding_CHW(output_size, images)
         H, W = images[0].shape[-2], images[0].shape[-1]
     elif oH > H and oW <= W:
-        images = ramdom_padding_CHW((oH, W), *images)
+        images = ramdom_padding_CHW((oH, W), images)
         H, W = images[0].shape[-2], images[0].shape[-1]
     elif oH <= H and oW > W:
-        images = ramdom_padding_CHW((H, oW), *images)
+        images = ramdom_padding_CHW((H, oW), images)
         H, W = images[0].shape[-2], images[0].shape[-1]
 
     H_start = np.random.randint(H-oH+1)
     W_start = np.random.randint(W-oW+1)
 
-    return [
+    c_images = [
         image[..., H_start:H_start+oH, W_start:W_start+oW] for image in images
     ]
+    return c_images
 
 random_crop_CHW = random_crop
 
-def random_crop_HWC(output_size, *images):
-    """ input images must be np.ndarray with dims (H, W, c)
+def random_crop_HWC(output_size, images):
+    """ Randomly crop images on H and W dimensions depends on output_size. Zero padings
+    will be added randomly if the original size is not big enough.
+    @ Args:
+        images: a sequencial object like tuple
+            each element must have at least 2 dimensions, which means they are tensors
+            with dim (H, W, c)
+    @ Returns:
+        0-th: a list of new images processed from your provided images
     """
     oH, oW = output_size
     H, W, _ = images[0].shape
     if oH > H and oW > W:
-        images = ramdom_padding_HWC(output_size, *images)
+        images = ramdom_padding_HWC(output_size, images)
         H, W, _ = images[0].shape
     elif oH > H and oW <= W:
-        images = ramdom_padding_HWC((oH, W), *images)
+        images = ramdom_padding_HWC((oH, W), images)
         H, W, _ = images[0].shape
     elif oH <= H and oW > W:
-        images = ramdom_padding_HWC((H, oW), *images)
+        images = ramdom_padding_HWC((H, oW), images)
         H, W, _ = images[0].shape
 
     H_start = np.random.randint(H-oH+1)
     W_start = np.random.randint(W-oW+1)
 
-    return [
+    c_images = [
         image[H_start:H_start+oH, W_start:W_start+oW, :] for image in images
     ]
+    return c_images
