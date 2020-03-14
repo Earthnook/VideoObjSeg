@@ -45,8 +45,8 @@ def extract_targets(images, mask, n_objects):
     maxH = int(bboxs[:,:,2].max())
     maxW = int(bboxs[:,:,3].max())
     # incase no object is extracted, aka. (H, W) == (0, 0)
-    maxH = 16 if maxH == 0 else maxH
-    maxW = 16 if maxW == 0 else maxW
+    maxH = 32 if maxH == 0 else maxH
+    maxW = 32 if maxW == 0 else maxW
 
     targets = torch.zeros((b, n_objects, C, maxH, maxW))
 
