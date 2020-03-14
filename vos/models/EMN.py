@@ -158,6 +158,7 @@ class PyramidPooling(nn.Module):
             for i, (module, pool_size) in enumerate(zip(self.path_module_list, self.pool_sizes)):
                 out = F.avg_pool2d(x, k_sizes[i], stride=strides[i], padding=0)
                 # out = F.adaptive_avg_pool2d(x, output_size=(pool_size, pool_size))
+                assert len(out.shape) > 0 and out.shape[0] > 0 and out.shape[1] > 0, str(out.shape)
                 if self.model_name != "icnet":
                     out = module(out)
                 out = F.interpolate(out, size=(h, w), mode="bilinear", align_corners=True)
@@ -188,7 +189,7 @@ class Decoder(STM.Decoder):
         self.aspp = PyramidPooling(
             in_channels= in_channels,
             pool_sizes= [6, 3, 2, 1],
-            is_batchnorm= True,
+            is_batchnorm= False,
         )
 
 
@@ -225,8 +226,13 @@ class EMN(STM.STM):
         num_objects = max(num_objects.max().item(), 1)
         B, K, keydim, T, H, W = keys.shape # B nope= 1
         B, K, valuedim, _, _, _ = values.shape
-        # pad
+        # pad query frame
         [frame], pad = pad_divide_by([frame], 16, (frame.size()[2], frame.size()[3]))
+        # pad target image
+        _, tar_n, tar_c, tar_h, tar_w = target.shape
+        target = target.view(-1, tar_c, tar_h, tar_w) # (B*tar_n, c,h,w)
+        [target], _ = pad_divide_by([target], 16, (target.size()[2], target.size()[3]))
+        target = target.view(B, tar_n, tar_c, target.shape[-2], target.shape[-1])
 
         r4e, r3e, r2e = self.Encoder_Q(frame, target[:,:num_objects]) # B*no, dim, ...
         k4e, v4e = self.KV_Q_r4(r4e)   # B*no, dim, H/16, W/16
