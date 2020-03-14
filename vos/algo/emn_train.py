@@ -28,7 +28,8 @@ def mask_targets(image, mask, n_objects):
     return target_images
 
 def extract_targets(images, mask, n_objects):
-    """
+    """ NOTE: in some cases, maybe all bounding boxes are in shape (0,0) this method will return a
+    (16, 16) patch, which is likely be a full-black patch.
     @ Args:
         images: torch.Tensor with shape (b, n_objects, C, H, W)
         mask: torch.Tensor with shape (b, N, H, W) where N >= n_objects+1
@@ -43,6 +44,9 @@ def extract_targets(images, mask, n_objects):
         bboxs = extract_bboxs(o_mask.reshape((-1, H, W)).numpy()).reshape((b, N, 4))
     maxH = int(bboxs[:,:,2].max())
     maxW = int(bboxs[:,:,3].max())
+    # incase no object is extracted, aka. (H, W) == (0, 0)
+    maxH = 16 if maxH == 0 else maxH
+    maxW = 16 if maxW == 0 else maxW
 
     targets = torch.zeros((b, n_objects, C, maxH, maxW))
 
