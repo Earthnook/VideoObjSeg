@@ -47,9 +47,8 @@ class ResBlock(nn.Module):
         return x + r 
 
 class Encoder_M(nn.Module):
-    def __init__(self, train_bn= True):
+    def __init__(self):
         super(Encoder_M, self).__init__()
-        self.train_bn = train_bn
 
         self.conv1_m = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.conv1_o = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -80,17 +79,10 @@ class Encoder_M(nn.Module):
         r3 = self.res3(r2) # 1/8, 512
         r4 = self.res4(r3) # 1/8, 1024
         return r4, r3, r2, c1, f
-    
-    def train(self, mode= True):
-        super(Encoder_M, self).train(mode= mode)
-        if not self.train_bn:
-            # disable all self's bn layer
-            self.bn1.eval()
  
 class Encoder_Q(nn.Module):
-    def __init__(self, train_bn= True):
+    def __init__(self):
         super(Encoder_Q, self).__init__()
-        self.train_bn = train_bn
 
         resnet = models.resnet50(pretrained=True)
         self.conv1 = resnet.conv1
@@ -117,13 +109,6 @@ class Encoder_Q(nn.Module):
         r4 = self.res4(r3) # 1/8, 1024
         return r4, r3, r2, c1, f
     
-    def train(self, mode= True):
-        super(Encoder_Q, self).train(mode= mode)
-        if not self.train_bn:
-            # disable all self's bn layer
-            self.bn1.eval()
-
-
 class Refine(nn.Module):
     def __init__(self, inplanes, planes, scale_factor=2):
         super(Refine, self).__init__()
@@ -201,14 +186,29 @@ class KeyValue(nn.Module):
 class STM(nn.Module):
     def __init__(self, train_bn= False):
         super(STM, self).__init__()
-        self.Encoder_M = Encoder_M(train_bn= train_bn) 
-        self.Encoder_Q = Encoder_Q(train_bn= train_bn) 
+        self.train_bn = train_bn
+        self.Encoder_M = Encoder_M() 
+        self.Encoder_Q = Encoder_Q() 
 
         self.KV_M_r4 = KeyValue(1024, keydim=128, valdim=512)
         self.KV_Q_r4 = KeyValue(1024, keydim=128, valdim=512)
 
         self.Memory = Memory()
         self.Decoder = Decoder(1024, 256)
+
+    def train(self, mode= True):
+        """ Besize setting the module to training mode, we also need to make all batchnorm
+        into eval mode if needed
+        """
+        super(STM, self).train(mode= mode)
+        if not self.train_bn:
+            for module in self.modules():
+                if isinstance(module, torch.nn.modules.BatchNorm1d):
+                    module.eval()
+                if isinstance(module, torch.nn.modules.BatchNorm2d):
+                    module.eval()
+                if isinstance(module, torch.nn.modules.BatchNorm3d):
+                    module.eval() 
  
     def Pad_memory(self, mems, num_objects, B, K):
         pad_mems = []

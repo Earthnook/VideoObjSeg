@@ -57,6 +57,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         algo = EMNAlgo(**config["algo_kwargs"])
     else:
         raise NotImplementedError("Cannnot deploy proper neural network solution")
+    model.train()
 
     # load parameters if available
     # itr_i = load_snapshot(log_dir, run_ID, model, algo)
