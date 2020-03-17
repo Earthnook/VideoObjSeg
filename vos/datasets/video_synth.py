@@ -102,8 +102,8 @@ class VideoSynthDataset(Dataset):
         target_cps = interest_cps + \
             np.random.uniform(-jitter_scale, jitter_scale, size= interest_cps.shape)
 
-        tps_image = image_tps_transform(image, interest_cps, target_cps)
-        tps_mask = image_tps_transform(mask, interest_cps, target_cps)
+        tps_image = image_tps_transform(image, interest_cps, target_cps, keep_filled= False)
+        tps_mask = image_tps_transform(mask, interest_cps, target_cps, keep_filled= False)
 
         return torch.from_numpy(tps_image), torch.from_numpy(tps_mask)
 
@@ -111,7 +111,7 @@ class VideoSynthDataset(Dataset):
         """ NOTE: each mask must have background layer at 0-th channel
         """
         masks = masks.to(dtype= torch.float32)
-        
+
         _, C, _, _ = masks.shape
         k_size = 2 * self.dilate_scale + 1
         dilate_kernel = torch.ones((C-1, 1, k_size, k_size))
@@ -120,6 +120,7 @@ class VideoSynthDataset(Dataset):
                 padding= self.dilate_scale,
                 groups= C-1,
             )
+            masks = torch.clamp(masks, 0, 1)
 
         masks = masks.to(dtype= torch.uint8)
         return masks

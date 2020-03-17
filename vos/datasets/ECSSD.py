@@ -27,14 +27,17 @@ class ECSSD(Dataset):
         mask_filenames = os.listdir(path.join(self._root, MASK_NAME))
         assert len(image_filenames) == len(mask_filenames), "Inconsistent data length"
 
-        self.filenames = image_filenames
+        # store filename without file extension (image and mask have different extension)
+        self.filenames = sorted([i[:-4] for i in image_filenames])
 
     def __len__(self):
-        return len(self.filenames)
+        return int(len(self.filenames) * (self._portion[1] - self._portion[0]))
 
     def __getitem__(self, idx):
-        image = skio.imread(path.join(self._root, IMAGE_NAME, self.filenames[idx])) / 255
-        mask = skio.imread(path.join(self._root, MASK_NAME, self.filenames[idx]))
+        idx += int(len(self.filenames) * self._portion[0])
+
+        image = skio.imread(path.join(self._root, IMAGE_NAME, self.filenames[idx]) + ".jpg") / 255
+        mask = skio.imread(path.join(self._root, MASK_NAME, self.filenames[idx]) + ".png") / 255
 
         image = image.astype(np.float32)
         image = image.transpose(2,0,1)
