@@ -42,6 +42,7 @@ def get_default_config():
             n_frames= 3,
             skip_increase_interval= 50,
             max_clips_sample= 2,
+            resolution= exp_image_size,
         ),
         random_subset_kwargs= dict(
             subset_len= 4,
@@ -86,8 +87,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 1,
-        gpu_per_run= 1,
+        n_gpu= 4,
+        gpu_per_run= 2,
     )
     default_config = get_default_config()
 
@@ -108,22 +109,15 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [(300, 400), (300, 400), (300, 400)],
-        # [(320, 480), (320, 480), (320, 480)],
-        # [(480, 480), (480, 480), (480, 480)],
-        [(384, 384), (384, 384), (384, 384)],
+        [(384, 384), ],
     ]
     dir_names = ["img_res-{},{}".format(*v[0]) for v in values]
-    keys = [
-        ("exp_image_size",),
-        ("videosynth_dataset_kwargs", "resolution"),
-        ("random_subset_kwargs", "resolution")
-    ]
+    keys = [("exp_image_size",),]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
         ["EMN", ],
-        # ["STM", ],
+        ["STM", ],
     ]
     dir_names = ["NN{}".format(*v) for v in values]
     keys = [
@@ -132,8 +126,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [True, 1],
-        [True, 3],
+        [True, 1],
+        # [True, 3],
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]
     keys = [
@@ -143,8 +137,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1, 1],
-        # [4, 4],
+        # [1, 1],
+        [4, 4],
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [

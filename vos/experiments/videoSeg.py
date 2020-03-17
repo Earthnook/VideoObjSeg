@@ -34,19 +34,22 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     config = load_variant(log_dir)
 
     # build the components for the experiment and run
+    config["videosynth_dataset_kwargs"].update({"resolution": config["exp_image_size"]})
     coco_train = VideoSynthDataset(
         COCO(**config["pretrain_dataset_kwargs"]),
         **config["videosynth_dataset_kwargs"],
     )
+    config["frame_skip_dataset_kwargs"].update({"resolution": config["exp_image_size"]})
     davis_train = FrameSkipDataset(
         DAVIS_2017_TrainVal(
             **config["train_dataset_kwargs"],
         ),
         **config["frame_skip_dataset_kwargs"]
     )
+    config["random_subset_kwargs"].update({"resolution": config["exp_image_size"]})
     davis_eval = RandomSubset(
         DAVIS_2017_TrainVal(**config["eval_dataset_kwargs"]),
-        **config["random_subset_kwargs"]
+        **config["random_subset_kwargs"],
     )
 
     if config["solution"] == "STM":
@@ -77,7 +80,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         **config["runner_kwargs"]
     )
 
-    name = "VOS_problem"
+    name = "Exp-{}".format(config["solution"])
     with logger_context(log_dir, run_ID, name,
             log_params= config,
             snapshot_mode= "last",

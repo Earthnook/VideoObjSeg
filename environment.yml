@@ -4,17 +4,16 @@ channels:
 dependencies:
 - python=3.6 # Only available for both exptools and eval_DAVIS to test
 - cudatoolkit=10.
-- pytorch=1.2 # If torchvision report error while running, use the line in pip
-- torchvision
 - numpy
 - psutil
-- pillow=6.2.0
 - pip
 - pip:
   - scikit-image
   - pycocotools
-  # - torchvision==0.2.2.post2 # alternative version to make torchvision work
+  - torch==1.0.1.post2
+  - torchvision==0.2.2.post2
   - opencv-python # It is recommended to install manually
+  - pillow=6.2.2
   - matplotlib
   - graphviz
   - tqdm
