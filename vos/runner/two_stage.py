@@ -4,6 +4,7 @@ from vos.runner.video_mask import VideoMaskRunner
 from exptools.logging import logger
 
 from tqdm import tqdm
+import sys
 import torch
 from torch.utils import data
 
@@ -63,8 +64,11 @@ class TwoStageRunner(VideoMaskRunner):
                         self.log_diagnostic(itr_i)
                     if max_train_itr is not None and itr_i >= max_train_itr:
                         return itr_i
+                    if not sys.stdin.isatty() and sys.stdin.readline() == "next":
+                        logger.log(f"User requested, move to next stage at iter: {itr_i}")
+                        return itr_i
         except KeyboardInterrupt:
-            print("Revieced key board interrupt, goto next stage")
+            logger.log(f"Keyboard interrupt at iter: {itr_i}, move to next stage")
         return itr_i
 
     def startup(self):
