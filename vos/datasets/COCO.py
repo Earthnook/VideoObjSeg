@@ -90,7 +90,11 @@ class COCO(data.Dataset):
         if self._is_subset:
             idx = min(SUBSET_LEN, idx)
 
-        img = self.coco.loadImgs(self.imgIds[idx])[0]
+        try:
+            img = self.coco.loadImgs(self.imgIds[idx])[0]
+        except Exception as e:
+            print(idx)
+            raise RuntimeError(e)
         # This image is in (H, W, C) shape
         image = io.imread('%s/images/%s'%(
             self._root,
@@ -146,7 +150,6 @@ class COCO(data.Dataset):
             image= torch.from_numpy(image), # pixel in [0, 1] scale
             mask= torch.from_numpy(mask), # NOTE: 0-th dimension of mask is (n_cats+1), 
                 # the order of the mas depends on self._supNms or self._catNms
-            bboxs= bboxs,
             n_objects= torch.tensor(n_objects),
         )
 

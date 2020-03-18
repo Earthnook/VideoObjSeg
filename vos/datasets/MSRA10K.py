@@ -35,7 +35,13 @@ class MSRA10K(Dataset):
         mask = skio.imread(path.join(self._root, SUB_DIR, self.img_files[idx]) + ".png") / 255
 
         image = image.astype(np.float32)
-        image = image.transpose(2,0,1)
+        # incase of gray-scale image
+        if len(image.shape) == 2:
+            image = np.tile(image, (3,1,1))
+        elif len(image.shape) == 3:
+            image = image.transpose(2,0,1)
+        else:
+            raise ValueError("Wrong image shape dimensions\n{}".format(str(self.img_files[idx])))
         mask = mask.astype(np.uint8)
         mask = np.stack([1-mask, mask])
 

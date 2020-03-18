@@ -40,6 +40,13 @@ class ECSSD(Dataset):
         mask = skio.imread(path.join(self._root, MASK_NAME, self.filenames[idx]) + ".png") / 255
 
         image = image.astype(np.float32)
+        # incase of gray-scale image
+        if len(image.shape) == 2:
+            image = np.tile(image, (3,1,1))
+        elif len(image.shape) == 3:
+            image = image.transpose(2,0,1)
+        else:
+            raise ValueError("Wrong image shape dimensions\n{}".format(str(self.img_files[idx])))
         image = image.transpose(2,0,1)
         mask = mask.astype(np.uint8)
         mask = np.stack([1-mask, mask])

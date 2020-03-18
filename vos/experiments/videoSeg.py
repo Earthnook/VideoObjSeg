@@ -9,7 +9,6 @@ from exptools.logging.context import logger_context
 from vos.datasets.COCO import COCO
 from vos.datasets.ECSSD import ECSSD
 from vos.datasets.MSRA10K import MSRA10K
-from vos.datasets.multi_dataset import MultiDataset
 from vos.datasets.DAVIS import DAVIS_2017_TrainVal
 from vos.datasets.video_synth import VideoSynthDataset
 from vos.datasets.frame_skip import FrameSkipDataset
@@ -25,7 +24,7 @@ from vos.utils.conbine_affinities import conbine_affinity
 from vos.utils.helpers import load_snapshot
 
 from torch.nn import DataParallel
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     # Considering the batch size, You have to provide at least 4 gpus for
@@ -40,7 +39,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     coco_train = COCO(**config["coco_kwargs"]),
     ecssd = ECSSD(**config["ecssd_kwargs"])
     msra10k = MSRA10K(**config["msra10k_kwargs"])
-    pretrain_dataset = MultiDataset(coco_train, ecssd, msra10k)
+    pretrain_dataset = ConcatDataset((coco_train, ecssd, msra10k))
 
     config["videosynth_dataset_kwargs"].update({"resolution": config["exp_image_size"]})
     train_dataset = VideoSynthDataset(
