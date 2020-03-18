@@ -78,7 +78,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         affinity= affinity,
         model= model,
         algo= algo,
-        pretrain_dataloader= DataLoader(coco_train, **config["pretrain_dataloader_kwargs"]),
+        pretrain_dataloader= DataLoader(train_dataset, **config["pretrain_dataloader_kwargs"]),
         dataloader= DataLoader(davis_train, 
             **config["dataloader_kwargs"]
         ),

@@ -88,22 +88,42 @@ class VideoSynthDataset(Dataset):
 
         return image, mask
 
-    def random_tps_transform(self, image, mask):
-        """ Apply a random TPS mapping onto both image and mask (they have the same TPS transformation)
-        """
-        image = image.numpy()
-        mask = mask.numpy()
-
-        _, ys, xs = np.nonzero(mask[1:] == 1)
-        idxs = np.random.choice(len(xs), self.TPS_kwargs["n_points"])
-        interest_cps = np.vstack((xs[idxs], ys[idxs])).T
-
-        jitter_scale = np.sqrt(xs.shape[0]) / (mask.shape[0]-1) * self.TPS_kwargs["scale"]
+    def tps_transform(self, image, mask, interest_cps, mask_area):
+        xs, ys = interest_cps[:, 0], interest_cps[:, 1]
+        jitter_scale = np.sqrt(mask_area) / (mask.shape[0]-1) * self.TPS_kwargs["scale"]
         target_cps = interest_cps + \
             np.random.uniform(-jitter_scale, jitter_scale, size= interest_cps.shape)
 
         tps_image = image_tps_transform(image, interest_cps, target_cps, keep_filled= False)
         tps_mask = image_tps_transform(mask, interest_cps, target_cps, keep_filled= False)
+        return tps_image, tps_mask
+
+    def random_tps_transform(self, image, mask):
+        """ Apply a random TPS mapping onto both image and mask (they have the same TPS 
+        transformation)
+        NOTE: image is in (C, H, W) shape
+        """
+        image = image.numpy()
+        mask = mask.numpy()
+
+        _, ys, xs = np.nonzero(mask[1:] == 1)
+        try:
+            idxs = np.random.choice(len(xs), self.TPS_kwargs["n_points"])
+            interest_cps = np.vstack((xs[idxs], ys[idxs])).T
+            tps_image, tps_mask = self.tps_transform(
+                image, mask,
+                interest_cps, len(xs)
+            )
+        except np.linalg.LinAlgError:
+            x_linspace = np.linspace(0, image.shape[2], self.TPS_kwargs["n_points"])
+            y_linspace = np.linspace(0, image.shape[1], self.TPS_kwargs["n_points"])
+            xs, ys = np.meshgrid(x_linspace[1:-1], y_linspace[1:-1])
+            xs, ys = xs.flatten(), ys.flatten() # (n_points-2)^2 elements each
+            interest_cps = np.stack([xs, ys]).T
+            tps_image, tps_mask = self.tps_transform(
+                image, mask,
+                interest_cps, len(xs)
+            )
 
         return torch.from_numpy(tps_image), torch.from_numpy(tps_mask)
 

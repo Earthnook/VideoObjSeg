@@ -98,8 +98,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 4,
-        gpu_per_run= 2,
+        n_gpu= 2,
+        gpu_per_run= 1,
     )
     default_config = get_default_config()
 
@@ -142,8 +142,8 @@ def main(args):
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]
     keys = [
-        ("coco_dataset_kwargs", "sort_anns"),
-        ("coco_dataset_kwargs", "max_n_objects"),
+        ("coco_kwargs", "sort_anns"),
+        ("coco_kwargs", "max_n_objects"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
@@ -167,7 +167,6 @@ def main(args):
             variants[i]["runner_kwargs"]["max_optim_epochs"] = 5
             variants[i]["runner_kwargs"]["eval_interval"] = 2
             variants[i]["runner_kwargs"]["log_interval"] = 4
-            variants[i]["pretrain_dataset_kwargs"]["is_subset"] = True
             variants[i]["train_dataset_kwargs"]["is_subset"] = True
             variants[i]["eval_dataset_kwargs"]["is_subset"] = True
             variants[i]["pretrain_dataloader_kwargs"]["shuffle"] = False
