@@ -13,11 +13,17 @@ def get_default_config():
     return dict(
         exp_image_size= exp_image_size,
         solution= "STM",
-        pretrain_dataset_kwargs = dict(
+        coco_kwargs = dict(
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
-            max_n_objects= 8,
-            sort_anns= False,
+            max_n_objects= 1,
+            sort_anns= True,
+        ),
+        ecssd_kwargs = dict(
+            root = path.join(root_path, "ECSSD/"),
+        ),
+        msra10k_kwargs = dict(
+            root = path.join(root_path, "MSRA10K_Imgs_GT/"),
         ),
         train_dataset_kwargs = dict(
             root= dataset_root_path,
@@ -37,6 +43,11 @@ def get_default_config():
                 scale_max= 2.,
                 shear_max= 50.,
             ),
+            TPS_kwargs= dict(
+                scale= 0.1,
+                n_points= 5,
+            ),
+            dilate_scale= 5,
         ),
         frame_skip_dataset_kwargs = dict(
             n_frames= 3,
@@ -96,15 +107,16 @@ def main(args):
     variant_levels = list()
 
     values = [
-        # [0., 10., 0.05, 0.,],
-        [5, 5, 0.05, 5],
+        [0., 10., 0.05, 0., 0.1],
+        # [5, 5, 0.05, 5, 0.1],
     ]
-    dir_names = ["affine{}-{}-{}-{}".format(*v) for v in values]
+    dir_names = ["synth{}-{}-{}-{}-{}".format(*v) for v in values]
     keys = [
         ("videosynth_dataset_kwargs", "affine_kwargs", "angle_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "translate_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "scale_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "shear_max"),
+        ("videosynth_dataset_kwargs", "TPS_kwargs", "scale"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
@@ -127,18 +139,17 @@ def main(args):
 
     values = [
         [True, 1],
-        # [True, 3],
     ]
     dir_names = ["big_objects-{}{}".format(*v) for v in values]
     keys = [
-        ("pretrain_dataset_kwargs", "sort_anns"),
-        ("pretrain_dataset_kwargs", "max_n_objects"),
+        ("coco_dataset_kwargs", "sort_anns"),
+        ("coco_dataset_kwargs", "max_n_objects"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1, 1],
-        [4, 4],
+        [1, 1],
+        # [4, 4],
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [

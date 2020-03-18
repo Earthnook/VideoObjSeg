@@ -50,4 +50,3 @@ class ECSSD(Dataset):
             n_objects = torch.Tensor([1,])[0], # if just a number, it will generate a random vector
         )
         
-        
