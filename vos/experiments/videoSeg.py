@@ -36,7 +36,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     config = load_variant(log_dir)
 
     # build the components for the experiment and run
-    coco_train = COCO(**config["coco_kwargs"]),
+    coco_train = COCO(**config["coco_kwargs"])
     ecssd = ECSSD(**config["ecssd_kwargs"])
     msra10k = MSRA10K(**config["msra10k_kwargs"])
     pretrain_dataset = ConcatDataset((coco_train, ecssd, msra10k))

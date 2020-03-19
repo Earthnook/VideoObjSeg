@@ -92,9 +92,8 @@ class COCO(data.Dataset):
 
         try:
             img = self.coco.loadImgs(self.imgIds[idx])[0]
-        except Exception as e:
-            print(idx)
-            raise RuntimeError(e)
+        except:
+            raise ValueError("Wrong index: {}".format(idx))
         # This image is in (H, W, C) shape
         image = io.imread('%s/images/%s'%(
             self._root,
