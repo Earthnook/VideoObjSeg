@@ -48,5 +48,5 @@ class MSRA10K(Dataset):
         return dict(
             image = torch.from_numpy(image),
             mask = torch.from_numpy(mask),
-            n_objects = torch.tensor([1,], dtype= torch.uint8)[0], # if just a number, it will generate a random vector
+            n_objects = torch.tensor(1)
         )

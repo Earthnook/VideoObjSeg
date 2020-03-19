@@ -114,7 +114,7 @@ class VideoSynthDataset(Dataset):
                 image, mask,
                 interest_cps, len(xs)
             )
-        except np.linalg.LinAlgError:
+        except:
             x_linspace = np.linspace(0, image.shape[2], self.TPS_kwargs["n_points"])
             y_linspace = np.linspace(0, image.shape[1], self.TPS_kwargs["n_points"])
             xs, ys = np.meshgrid(x_linspace[1:-1], y_linspace[1:-1])
@@ -158,8 +158,14 @@ class VideoSynthDataset(Dataset):
                     frame, m_frame = self.random_tps_transform(frame, m_frame)
                     video.append(frame)
                     m_video.append(m_frame)
-                videos.append(torch.stack(video))
-                m_videos.append(self.dilate_mask(torch.stack(m_video)))
+                try:
+                    videos.append(torch.stack(video))
+                except:
+                    raise ValueError([i.shape for i in video])
+                try:
+                    m_videos.append(self.dilate_mask(torch.stack(m_video)))
+                except:
+                    raise ValueError([i.shape for i in m_video])
         videos = torch.stack(videos)
         m_videos = torch.stack(m_videos)
         # the returned videos should be batch-wise
@@ -170,6 +176,7 @@ class VideoSynthDataset(Dataset):
 
     def __getitem__(self, idx):
         img = self.dataset[idx]
+        assert isinstance(img, dict), str(self.dataset) + "###########" + str(type(img))
         image = img["image"]
         mask = img["mask"]
 

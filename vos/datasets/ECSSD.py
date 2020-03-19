@@ -47,13 +47,12 @@ class ECSSD(Dataset):
             image = image.transpose(2,0,1)
         else:
             raise ValueError("Wrong image shape dimensions\n{}".format(str(self.img_files[idx])))
-        image = image.transpose(2,0,1)
         mask = mask.astype(np.uint8)
         mask = np.stack([1-mask, mask])
 
         return dict(
             image = torch.from_numpy(image),
             mask = torch.from_numpy(mask),
-            n_objects = torch.tensor([1,], dtype= torch.uint8)[0], # if just a number, it will generate a random vector
+            n_objects = torch.tensor(1)
         )
         
