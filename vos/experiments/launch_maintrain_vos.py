@@ -43,7 +43,7 @@ def main(args):
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [
-        ("pretrain_snapshot_path", "batch_size"),
+        ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))

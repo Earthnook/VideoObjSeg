@@ -13,7 +13,7 @@ import glob
 class DAVIS_MO_Test(data.Dataset):
     # for multi object, do shuffling
 
-    def __init__(self, root, imset='2017/train.txt', resolution='480p', single_object=False):
+    def __init__(self, root, imset='2017/train.txt', resolution='480p', single_object=False, K= 12):
         self.root = root
         self.mask_dir = os.path.join(root, 'Annotations', resolution)
         self.mask480_dir = os.path.join(root, 'Annotations', '480p')
@@ -37,7 +37,7 @@ class DAVIS_MO_Test(data.Dataset):
                 _mask480 = np.array(Image.open(os.path.join(self.mask480_dir, _video, '00000.png')).convert("P"))
                 self.size_480p[_video] = np.shape(_mask480)
 
-        self.K = 12
+        self.K = K # setable to reduce memory usage and reduce tracked objects
         self.single_object = single_object
 
     def __len__(self):
@@ -82,11 +82,12 @@ class DAVIS_MO_Test(data.Dataset):
             N_masks = (N_masks > 0.5).astype(np.uint8) * (N_masks < 255).astype(np.uint8)
             Ms = torch.from_numpy(self.All_to_onehot(N_masks).copy()).float()
             num_objects = torch.LongTensor([int(1)])
-            return Fs, Ms, num_objects, info
         else:
             Ms = torch.from_numpy(self.All_to_onehot(N_masks).copy()).float()
             num_objects = torch.LongTensor([int(self.num_objects[video])])
-            return Fs, Ms, num_objects, info
+        # restrict num_objects to not exceed the Mask dimension
+        num_objects[0] = min(num_objects[0], self.K-1)
+        return Fs, Ms, num_objects, info
 
 class DAVIS_2017_TrainVal(DAVIS_MO_Test):
     """ A proper dataset for DAVIS 2017
@@ -95,13 +96,16 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
             root,
             mode= "train", # choose between "train", "val"
             resolution= "480p",
+            max_n_objects= 1,
             is_subset= False, # if subset_mode, it will choose a fixed 3 videos
         ):
         super(DAVIS_2017_TrainVal, self).__init__(root,
             imset= "2017/{}.txt".format(mode),
             resolution= resolution,
+            K = max_n_objects+1,
         )
         self._is_subset = is_subset
+        self._max_n_objects = max_n_objects
 
     def __len__(self):
         if self._is_subset:
@@ -113,9 +117,10 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
         Fs, Ms, n_objects, info = super(DAVIS_2017_TrainVal, self).__getitem__(idx)
         # both Fs and Ms are in shape (t, n, H, W)
         # NOTE: different data (from idx) might not be the same in terms of resolution
+        mask = Ms.to(dtype= torch.uint8)
         return dict(
             video= Fs,
-            mask= Ms.to(dtype= torch.uint8),
+            mask= mask,
             n_objects= n_objects,
         )
 

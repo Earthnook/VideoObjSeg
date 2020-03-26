@@ -89,7 +89,10 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         **config["runner_kwargs"]
     )
 
-    name = "Exp-{}".format(config["solution"])
+    name = "Exp-{}-{}".format(
+        config["solution"],
+        ("Main" if config["pretrain_snapshot_filename"] is not None else "preMain"),
+    )
     with logger_context(log_dir, run_ID, name,
             log_params= config,
             snapshot_mode= "last",
