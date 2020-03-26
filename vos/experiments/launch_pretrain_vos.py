@@ -13,6 +13,7 @@ def get_default_config():
     return dict(
         exp_image_size= exp_image_size,
         solution= "STM",
+        pretrain_snapshot_filename= None,
         coco_kwargs = dict(
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
@@ -86,7 +87,7 @@ def get_default_config():
         ),
         runner_kwargs= dict(
             pretrain_optim_epochs= int(10),
-            max_optim_epochs= int(20),
+            max_optim_epochs= int(20000),
             eval_interval= 20,
             log_interval= 5, # in terms of the # of calling algo.train()
             max_predata_see= None, # might make the training stop before reaching max_optim_epochs

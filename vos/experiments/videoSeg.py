@@ -21,7 +21,7 @@ from vos.algo.emn_train import EMNAlgo
 
 from vos.runner.two_stage import TwoStageRunner
 from vos.utils.conbine_affinities import conbine_affinity
-from vos.utils.helpers import load_snapshot
+from vos.utils.helpers import load_snapshot, load_pretrained_snapshot
 
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader, ConcatDataset
@@ -71,6 +71,8 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     # load parameters if available
     # itr_i = load_snapshot(log_dir, run_ID, model, algo)
+    if not config["pretrain_snapshot_filename"] is None:
+        load_pretrained_snapshot(config["pretrain_snapshot_filename"], model, algo)
     itr_i = 0
 
     runner = TwoStageRunner(

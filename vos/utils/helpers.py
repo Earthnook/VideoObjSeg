@@ -96,6 +96,14 @@ def overlay_images(images, masks, alpha= 0.4):
 
     return images
 
+def load_pretrained_snapshot(filename, model, algo):
+    states = torch.load(filename)
+    model.load_state_dict(states["model_state_dict"])
+    algo.load_state_dict(states["algo_state_dict"])
+
+    logger.log("snapshot loaded at iteration {}".format(states["itr_i"]))
+    return states["itr_i"]
+
 def load_snapshot(logdir, run_ID, model, algo):
     """ find proper snapshot file and load state dict to them
     NOTE: the file name is hard coded here, please make sure. Or this might not be the file
@@ -113,12 +121,8 @@ def load_snapshot(logdir, run_ID, model, algo):
         logger.log("File not found, didn't load snapshot")
         return 0
     # Assuming there is only 1 .pkl file
-    states = torch.load(os.path.join(rundir, files[0]))
-    model.load_state_dict(states["model_state_dict"])
-    algo.load_state_dict(states["algo_state_dict"])
-
-    logger.log("snapshot loaded at iteration {}".format(states["itr_i"]))
-    return states["itr_i"]
+    filename = os.path.join(rundir, files[0])
+    return load_pretrained_snapshot(filename, model, algo)
 
 def stack_images(images):
     """ Given a batch of images as ndarray (b, n, C, H, W)
