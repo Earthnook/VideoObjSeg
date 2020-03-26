@@ -29,10 +29,12 @@ def get_default_config():
         train_dataset_kwargs = dict(
             root= dataset_root_path,
             mode= "train",
+            max_n_objects= 1,
         ),
         eval_dataset_kwargs = dict(
             root= dataset_root_path,
-            mode= "val"
+            mode= "val",
+            max_n_objects= 12,
         ),
         videosynth_dataset_kwargs = dict(
             n_frames= 3,
