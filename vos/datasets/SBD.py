@@ -112,6 +112,6 @@ class SBD(Dataset):
             image= torch.from_numpy(image), # pixel in [0, 1] scale
             mask= torch.from_numpy(onehot_mask), # NOTE: 0-th dimension of mask is (n_cats+1), 
                 # the order of the mas depends on self._supNms or self._catNms
-            n_objects= torch.tensor(n_objects),
+            n_objects= torch.LongTensor([int(n_objects)])[0],
         )
 

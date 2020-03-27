@@ -9,6 +9,8 @@ from exptools.logging.context import logger_context
 from vos.datasets.COCO import COCO
 from vos.datasets.ECSSD import ECSSD
 from vos.datasets.MSRA10K import MSRA10K
+from vos.datasets.SBD import SBD
+from vos.datasets.VOC import VOCSegmentation
 from vos.datasets.DAVIS import DAVIS_2017_TrainVal
 from vos.datasets.video_synth import VideoSynthDataset
 from vos.datasets.frame_skip import FrameSkipDataset
@@ -36,10 +38,15 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     config = load_variant(log_dir)
 
     # build the components for the experiment and run
+    config["coco_kwargs"].update({"max_n_objects": config["max_n_objects"]})
     coco_train = COCO(**config["coco_kwargs"])
     ecssd = ECSSD(**config["ecssd_kwargs"])
     msra10k = MSRA10K(**config["msra10k_kwargs"])
-    pretrain_dataset = ConcatDataset((coco_train, ecssd, msra10k))
+    config["sbd_kwargs"].update({"max_n_objects": config["max_n_objects"]})
+    sbd = SBD(**config["sbd_kwargs"])
+    config["voc_kwargs"].update({"max_n_objects": config["max_n_objects"]})
+    voc = VOCSegmentation(**config["voc_kwargs"])
+    pretrain_dataset = ConcatDataset((ecssd, msra10k, coco_train, sbd, voc))
 
     config["videosynth_dataset_kwargs"].update({"resolution": config["exp_image_size"]})
     train_dataset = VideoSynthDataset(
@@ -91,7 +98,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     name = "Exp-{}-{}".format(
         config["solution"],
-        ("Main" if config["pretrain_snapshot_filename"] is not None else "preMain"),
+        ("Main" if config["pretrain_snapshot_filename"] is None else "preMain"),
     )
     with logger_context(log_dir, run_ID, name,
             log_params= config,

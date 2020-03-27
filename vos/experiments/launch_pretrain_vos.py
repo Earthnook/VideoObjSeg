@@ -10,14 +10,16 @@ def get_default_config():
     root_path = "/p300/videoObjSeg_dataset/"
     dataset_root_path = path.join(root_path, "DAVIS-2017-trainval-480p/")
     exp_image_size= (384, 384)
+    max_n_objects = 1
     return dict(
         exp_image_size= exp_image_size,
+        max_n_objects = max_n_objects,
         solution= "STM",
         pretrain_snapshot_filename= None,
         coco_kwargs = dict(
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
-            max_n_objects= 1,
+            max_n_objects= max_n_objects,
             sort_anns= True,
         ),
         ecssd_kwargs = dict(
@@ -26,10 +28,18 @@ def get_default_config():
         msra10k_kwargs = dict(
             root = path.join(root_path, "MSRA10K_Imgs_GT/"),
         ),
+        voc_kwargs = dict(
+            root = path.join(root_path, "VOC/"),
+            max_n_objects = max_n_objects,
+        ),
+        sbd_kwargs = dict(
+            root = path.join(root_path, "SBD/"),
+            max_n_objects = max_n_objects,
+        ),
         train_dataset_kwargs = dict(
             root= dataset_root_path,
             mode= "train",
-            max_n_objects= 1,
+            max_n_objects= max_n_objects,
         ),
         eval_dataset_kwargs = dict(
             root= dataset_root_path,
@@ -101,8 +111,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 2,
-        gpu_per_run= 2,
+        n_gpu= 4,
+        gpu_per_run= 4,
     )
     default_config = get_default_config()
 

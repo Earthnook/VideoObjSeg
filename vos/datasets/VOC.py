@@ -12,8 +12,6 @@ from torch.utils.data import Dataset
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
-import matplotlib.pyplot as plt
-
 import os
 import cv2
 import numpy as np
@@ -80,15 +78,7 @@ class VOCSegmentation(VOCSegmentationObject):
     def __getitem__(self, idx):
         image, targets = super().__getitem__(idx)
         image = to_tensor(image) # (C, H, W)
-        plt.imshow(targets); plt.figure()
         targets = to_tensor(targets).numpy()*255 # (N, H, W)
-
-        print(self.masks[idx])
-        plt.hist(targets[0][(targets[0] > 0) & (targets[0] < 255)].reshape(-1), bins= int(256))
-        plt.show()
-        plt.figure()
-        plt.imshow((targets[0] > 0) & (targets[0] < 255))
-        print(((targets[0] > 0) & (targets[0] < 255)).max())
 
         targets = targets.astype(np.uint8)[0] # (H, W) with [0,255] encode
         fgs = VOCSegmentation.make_instance_mask(targets)
@@ -111,5 +101,5 @@ class VOCSegmentation(VOCSegmentationObject):
         return dict(
             image= image,
             mask= torch.from_numpy(masks),
-            n_objects= torch.tensor(n_objects),
+            n_objects= torch.LongTensor([int(n_objects)])[0],
         )

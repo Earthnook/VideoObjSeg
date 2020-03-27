@@ -48,5 +48,5 @@ class MSRA10K(Dataset):
         return dict(
             image = torch.from_numpy(image),
             mask = torch.from_numpy(mask),
-            n_objects = torch.tensor(1)
+            n_objects = torch.LongTensor([int(1)])[0]
         )
