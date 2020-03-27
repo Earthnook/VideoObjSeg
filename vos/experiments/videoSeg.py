@@ -39,14 +39,14 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     # build the components for the experiment and run
     config["coco_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-    coco_train = COCO(**config["coco_kwargs"])
+    coco = COCO(**config["coco_kwargs"])
     ecssd = ECSSD(**config["ecssd_kwargs"])
     msra10k = MSRA10K(**config["msra10k_kwargs"])
     config["sbd_kwargs"].update({"max_n_objects": config["max_n_objects"]})
     sbd = SBD(**config["sbd_kwargs"])
     config["voc_kwargs"].update({"max_n_objects": config["max_n_objects"]})
     voc = VOCSegmentation(**config["voc_kwargs"])
-    pretrain_dataset = ConcatDataset((ecssd, msra10k, coco_train, sbd, voc))
+    pretrain_dataset = ConcatDataset((ecssd, msra10k, voc, sbd, coco))
 
     config["videosynth_dataset_kwargs"].update({"resolution": config["exp_image_size"]})
     train_dataset = VideoSynthDataset(
