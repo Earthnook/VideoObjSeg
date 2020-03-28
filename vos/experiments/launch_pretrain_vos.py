@@ -111,8 +111,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 4,
-        gpu_per_run= 4,
+        n_gpu= 2,
+        gpu_per_run= 2,
     )
     default_config = get_default_config()
 
@@ -168,6 +168,16 @@ def main(args):
     keys = [
         ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        # [0.],
+        [5e-4],
+    ]
+    dir_names = ["w_decay-{}".format(v[0]) for v in values]
+    keys = [
+        ("algo_kwargs", "weight_decay"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

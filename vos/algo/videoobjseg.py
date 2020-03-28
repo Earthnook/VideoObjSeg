@@ -19,7 +19,6 @@ class VideoObjSegAlgo(AlgoBase):
     def __init__(self,
             clip_grad_norm= 1e9,
             loss_fn= nn.BCELoss(),
-            contour_weight= 1.0,
             train_step_kwargs= dict(),
             eval_step_kwargs= dict(),
             include_bg_loss= False,
@@ -40,7 +39,7 @@ class VideoObjSegAlgo(AlgoBase):
         """
         raise NotImplementedError
 
-    def calc_performance(self, pred, gtruth):
+    def calc_performance(self, pred, gtruth, smooth= 1):
         """ Given the statistics (in same shape (N, ...)) and caculate average value in this batch
             NOTE: the average is only taken on 0-th dimension
             Calculation refering to book: 
@@ -49,17 +48,23 @@ class VideoObjSegAlgo(AlgoBase):
         N = pred.shape[0]
         gtruth = gtruth.astype(np.uint8).reshape(N, -1)
         pred = pred.astype(np.uint8).reshape(N, -1)
+
+        intersect = np.sum(gtruth & pred, axis= 1) + smooth
+        union = np.sum(gtruth | pred, axis= 1) + smooth
+
         # calculate region similarity (a.k.a Intersection over Unit)
-        IoU = np.sum(gtruth & pred, axis= 1) / np.sum(gtruth | pred, axis= 1)
+        IoU = intersect / union
 
         # calculate contour accuracy
-        intersect = np.sum(gtruth & pred, axis= 1)
-        accuracy_rate = intersect / np.sum(pred, axis= 1)
-        recall_rate = intersect / np.sum(gtruth, axis= 1)
-        contour_acc = (np.reciprocal(self.contour_weight**2) + 1) * \
-            (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate)
+        accuracy_rate = intersect / (np.sum(pred, axis= 1) + smooth)
+        recall_rate = intersect / (np.sum(gtruth, axis= 1) + smooth)
+        contour_acc = 2 * (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate)
 
-        return dict(IoU= np.nanmean(IoU), contour_acc= np.nanmean(contour_acc))
+        return dict(
+            IoU= np.nanmean(IoU),
+            contour_acc= np.nanmean(contour_acc),
+            IoU_each_frame = IoU, # add this term for debugging, will not effect logging mechanism
+        )
 
     def train(self, itr_i, data):
         """
@@ -84,8 +89,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         loss_idx = 0 if self.include_bg_loss else 1
         _, _, n, H, W = gtruths.shape
-        p = preds[:,1:,loss_idx:].reshape(-1, H, W)
-        g = gtruths[:,1:,loss_idx:].reshape(-1, H, W)
+        p = preds[:,:,loss_idx:].reshape(-1, n-1, H, W)
+        g = gtruths[:,:,loss_idx:].reshape(-1, n-1, H, W)
         performance_status = self.calc_performance(p, g)
     
         return TrainInfo(
@@ -98,7 +103,8 @@ class VideoObjSegAlgo(AlgoBase):
                 videos= data["video"].cpu().numpy()[:,1:],
                 masks= data["mask"].cpu().numpy()[:,1:],
                 preds= preds[:,1:],
-                n_objects= data["n_objects"]
+                n_objects= data["n_objects"],
+                IoU_each_frame= performance_status["IoU_each_frame"],
             )
 
 
@@ -122,8 +128,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         loss_idx = 0 if self.include_bg_loss else 1
         _, _, n, H, W = gtruths.shape
-        p = preds[:,1:,loss_idx:].reshape(-1, H, W)
-        g = gtruths[:,1:,loss_idx:].reshape(-1, H, W)
+        p = preds[:,:,loss_idx:].reshape(-1, n-1, H, W)
+        g = gtruths[:,:,loss_idx:].reshape(-1, n-1, H, W)
         performance_status = self.calc_performance(p, g)
 
         return EvalInfo(
@@ -135,5 +141,6 @@ class VideoObjSegAlgo(AlgoBase):
                 videos= data["video"].cpu().numpy()[:,1:],
                 masks= data["mask"].cpu().numpy()[:,1:],
                 preds= preds[:,1:],
-                n_objects= data["n_objects"]
+                n_objects= data["n_objects"],
+                IoU_each_frame= performance_status["IoU_each_frame"],
             )
