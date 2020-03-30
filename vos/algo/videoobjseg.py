@@ -54,7 +54,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         # calculate region similarity (a.k.a Intersection over Unit)
         IoU = intersect / union
-        too_smalls = (np.isclose(np.sum(pred, axis= 1), 0)) & np.isclose(np.sum(pred, axis= 1), 0)
+        # This modification referring to https://github.com/fperazzi/davis/blob/master/python/lib/davis/measures/jaccard.py#L29
+        too_smalls = np.isclose(np.sum(pred, axis= 1), 0) & np.isclose(np.sum(pred, axis= 1), 0)
         IoU[too_smalls] = 1
 
         # calculate contour accuracy
@@ -65,7 +66,8 @@ class VideoObjSegAlgo(AlgoBase):
         return dict(
             IoU= np.nanmean(IoU),
             contour_acc= np.nanmean(contour_acc),
-            IoU_each_frame = IoU, # add this term for debugging, will not effect logging mechanism
+            IoU_each_frame= IoU, # add this term for debugging, will not effect logging mechanism
+            contour_acc_frame= contour_acc,
         )
 
     def train(self, itr_i, data):
@@ -107,6 +109,7 @@ class VideoObjSegAlgo(AlgoBase):
                 preds= preds[:,1:],
                 n_objects= data["n_objects"],
                 IoU_each_frame= performance_status["IoU_each_frame"],
+                contour_acc_frame= performance_status["contour_acc_frame"],
             )
 
 
@@ -145,4 +148,5 @@ class VideoObjSegAlgo(AlgoBase):
                 preds= preds[:,1:],
                 n_objects= data["n_objects"],
                 IoU_each_frame= performance_status["IoU_each_frame"],
+                contour_acc_frame= performance_status["contour_acc_frame"],
             )
