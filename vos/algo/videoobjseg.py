@@ -91,8 +91,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         loss_idx = 0 if self.include_bg_loss else 1
         _, _, n, H, W = gtruths.shape
-        p = preds[:,:,loss_idx:].reshape(-1, n-1, H, W)
-        g = gtruths[:,:,loss_idx:].reshape(-1, n-1, H, W)
+        p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
+        g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         performance_status = self.calc_performance(p, g)
     
         return TrainInfo(
@@ -130,8 +130,8 @@ class VideoObjSegAlgo(AlgoBase):
 
         loss_idx = 0 if self.include_bg_loss else 1
         _, _, n, H, W = gtruths.shape
-        p = preds[:,:,loss_idx:].reshape(-1, n-1, H, W)
-        g = gtruths[:,:,loss_idx:].reshape(-1, n-1, H, W)
+        p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
+        g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         performance_status = self.calc_performance(p, g)
 
         return EvalInfo(
