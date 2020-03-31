@@ -38,19 +38,21 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1, 1],
-        [4, 4],
+        # [1, 1, 1],
+        [4, 4, 1],
+        # [4, 4, 4],
     ]
     dir_names = ["b_size-{}".format(v[0]) for v in values]
     keys = [
         ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),
+        ("train_dataset_kwargs", "max_n_objects"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [None, 0],
-        ["/root/VideoObjSeg/data/weightfiles/STM_params_56.38DAVIS2017val.pkl", 0],
+        # [None, 0],
+        ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_59.9-65.1_DAVIS2017val.pkl", 0],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [
@@ -68,8 +70,6 @@ def main(args):
             variants[i]["runner_kwargs"]["max_optim_epochs"] = 5
             variants[i]["runner_kwargs"]["eval_interval"] = 2
             variants[i]["runner_kwargs"]["log_interval"] = 4
-            variants[i]["train_dataset_kwargs"]["is_subset"] = True
-            variants[i]["eval_dataset_kwargs"]["is_subset"] = True
             variants[i]["pretrain_dataloader_kwargs"]["shuffle"] = False
             variants[i]["dataloader_kwargs"]["shuffle"] = False
             variants[i]["pretrain_dataloader_kwargs"]["num_workers"] = 0

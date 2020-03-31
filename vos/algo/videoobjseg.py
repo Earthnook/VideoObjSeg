@@ -46,8 +46,8 @@ class VideoObjSegAlgo(AlgoBase):
             Pattern Recognition and Computer Vision: Second Chinese Conference, PRCV page 423
         """
         N = pred.shape[0]
-        gtruth = gtruth.astype(np.uint8).reshape(N, -1)
-        pred = pred.astype(np.uint8).reshape(N, -1)
+        gtruth = gtruth.astype(np.bool).reshape(N, -1)
+        pred = pred.astype(np.bool).reshape(N, -1)
 
         intersect = np.sum(gtruth & pred, axis= 1) + smooth
         union = np.sum(gtruth | pred, axis= 1) + smooth
