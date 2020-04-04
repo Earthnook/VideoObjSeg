@@ -2,7 +2,7 @@
 """
 import sys
 import os
-from exptools.launching.affinity import affinity_from_code, set_gpu_from_visibles
+from exptools.launching.affinity import affinity_from_code, set_gpu_from_visibles, combine_affinity
 from exptools.launching.variant import load_variant
 from exptools.logging.context import logger_context
 
@@ -22,7 +22,6 @@ from vos.models.EMN import EMN
 from vos.algo.emn_train import EMNAlgo
 
 from vos.runner.two_stage import TwoStageRunner
-from vos.utils.conbine_affinities import conbine_affinity
 from vos.utils.helpers import load_snapshot, load_pretrained_snapshot
 
 from torch.nn import DataParallel
@@ -33,7 +32,7 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     # this experiment.
     affinity = affinity_from_code(affinity_code)
     if isinstance(affinity, list):
-        affinity = conbine_affinity(affinity)
+        affinity = combine_affinity(affinity)
     set_gpu_from_visibles(affinity.get("cuda_idx", 0))
     config = load_variant(log_dir)
 
