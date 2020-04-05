@@ -118,11 +118,6 @@ class RunnerBase:
 
         logger.dump_tabular()
 
-    def load_snapshot(self):
-        """ A method to load parameters from snapshot and keep on sampling
-        """
-        pass
-
     def shutdown(self):
         """ Make sure all cleanup is done
         """
