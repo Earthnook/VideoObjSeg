@@ -12,7 +12,7 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 4,
+        n_gpu= 2,
         gpu_per_run= 2,
     )
     default_config = get_default_config()
@@ -28,8 +28,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # ["EMN", ],
-        ["STM", ],
+        ["EMN", ],
+        # ["STM", ],
     ]
     dir_names = ["NN{}".format(*v) for v in values]
     keys = [
@@ -52,7 +52,8 @@ def main(args):
 
     values = [
         # [None, 0],
-        ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_59.9-65.1_DAVIS2017val.pkl", 0],
+        # ["/root/VideoObjSeg/data/weightfiles/STM_5ImgData_pretrain_62.1-65.6_DAVIS2017val.pkl", 0],
+        ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_71.11-74.20_DAVIS2017val.pkl", 0],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [
