@@ -183,15 +183,18 @@ class Decoder(STM.Decoder):
     def __init__(self,
             in_channels,
             mdim,
+            pool_sizes= [6,3,2,1] # if None, PyramidPooling will not be used
         ):
-        super(Decoder, self).__init__(2*in_channels, mdim)
-
-        self.aspp = PyramidPooling(
-            in_channels= in_channels,
-            pool_sizes= [6, 3, 2, 1],
-            is_batchnorm= False,
-        )
-
+        self.use_pool = (not pool_sizes is None)
+        if self.use_pool:
+            super(Decoder, self).__init__(2*in_channels, mdim)
+            self.aspp = PyramidPooling(
+                in_channels= in_channels,
+                pool_sizes= pool_sizes,
+                is_batchnorm= False,
+            )
+        else:
+            super(Decoder, self).__init__(in_channels, mdim)
 
     def forward(self, r4, r3, r2):
         """ To meet the interface of STM, this network still accept more than 1 arguments,
@@ -199,8 +202,9 @@ class Decoder(STM.Decoder):
         @ Args:
             r4: the return of space-time memory read option.
         """
-        r4pool = self.aspp(r4)
-        return super(Decoder, self).forward(r4pool, r3, r2)
+        if self.use_pool:
+            r4 = self.aspp(r4)
+        return super(Decoder, self).forward(r4, r3, r2)
 
 
 class EMN(STM.STM):
