@@ -20,6 +20,7 @@ class AlgoBase:
             OptimCls= optim.Adam,
             learning_rate= 1e-5,
             weight_decay= 1e-2,
+            **kwargs,
         ):
         save__init__args(locals())
 
@@ -36,10 +37,13 @@ class AlgoBase:
     def state_dict(self):
         """ summarize current state for snapshot
         """
-        return dict()
+        return dict(
+            optim_state_dict= self.optim.state_dict(),
+        )
 
     def load_state_dict(self, state):
-        pass
+        if "optim_state_dict" in state:
+            self.optim.state_dict.load_state_dict(state["optim_state_dict"])
 
     def train(self, optim_i, data):
         """ Perform one interation of optimization. Under most circumstance, it corresponding to

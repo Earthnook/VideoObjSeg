@@ -21,13 +21,6 @@ def main(args):
     variant_levels = list()
 
     values = [
-        [(384, 384), ],
-    ]
-    dir_names = ["img_res-{},{}".format(*v[0]) for v in values]
-    keys = [("exp_image_size",),]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
         ["EMN", ],
         # ["STM", ],
     ]
@@ -53,7 +46,8 @@ def main(args):
     values = [
         # [None, 0],
         # ["/root/VideoObjSeg/data/weightfiles/STM_5ImgData_pretrain_62.1-65.6_DAVIS2017val.pkl", 0],
-        ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_71.11-74.20_DAVIS2017val.pkl", 0],
+        # ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_71.11-41.20_DAVIS2017val.pkl", 0],
+        ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_66.95-36.16_DAVIS2017val.pkl", 0],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [

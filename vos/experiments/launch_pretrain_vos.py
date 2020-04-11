@@ -94,6 +94,8 @@ def get_default_config():
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
             weight_decay= 0,
+            lr_power= 0.9,
+            lr_max_iter= int(5e9),
             train_step_kwargs= dict(Mem_every= 1),
             eval_step_kwargs= dict(Mem_every= 5),
         ),
@@ -111,8 +113,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 2,
-        gpu_per_run= 2,
+        n_gpu= 4,
+        gpu_per_run= 4,
     )
     default_config = get_default_config()
 
@@ -134,13 +136,6 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [(384, 384), ],
-    ]
-    dir_names = ["img_res-{},{}".format(*v[0]) for v in values]
-    keys = [("exp_image_size",),]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
         ["EMN", ],
         # ["STM", ],
     ]
@@ -151,33 +146,25 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [True, 1],
+        # [4,  4,  1e-5, int(1e20), 0.9],
+        [24, 24, 5e-5, int(1e10), 0.9],
     ]
-    dir_names = ["big_objects-{}{}".format(*v) for v in values]
-    keys = [
-        ("coco_kwargs", "sort_anns"),
-        ("coco_kwargs", "max_n_objects"),
-    ]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
-        # [1, 1],
-        [4, 4],
-    ]
-    dir_names = ["b_size-{}".format(v[0]) for v in values]
+    dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]
     keys = [
         ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),
+        ("algo_kwargs", "learning_rate"),
+        ("algo_kwargs", "lr_max_iter"),
+        ("algo_kwargs", "lr_power"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [0.],
-        # [5e-4],
+        [1,],
     ]
-    dir_names = ["w_decay-{}".format(v[0]) for v in values]
+    dir_names = ["pixel_dilate-{}".format(*v) for v in values]
     keys = [
-        ("algo_kwargs", "weight_decay"),
+        ("videosynth_dataset_kwargs", "dilate_scale"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

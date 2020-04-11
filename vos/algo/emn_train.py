@@ -1,4 +1,5 @@
 from vos.algo.videoobjseg import VideoObjSegAlgo
+from vos.algo.lr_scheduler import PolyLR
 from vos.utils.helpers import extract_bboxs
 
 import numpy as np
@@ -65,6 +66,40 @@ class EMNAlgo(VideoObjSegAlgo):
     """ The algorithm re-producing Enhanced Memory Network at 
     https://youtube-vos.org/assets/challenge/2019/reports/YouTube-VOS-01_Enhanced_Memory_Network_for_Video_Segmentation.pdf
     """
+    def __init__(self,
+            LRSchedulerCls= PolyLR,
+            lr_power= 0.9,
+            lr_max_iter= int(5e10),
+            **kwargs,
+        ):
+        super().__init__(**kwargs)
+        self.LRSchedulerCls = LRSchedulerCls
+        self.lr_power = lr_power
+        self.lr_max_iter = lr_max_iter
+
+    def initialize(self, model):
+        super().initialize(model)
+        self.lr_scheduler = self.LRSchedulerCls(self.optim,
+            init_lr= self.learning_rate,
+            max_iter= self.lr_max_iter,
+            power= self.lr_power,
+        )
+
+    def train(self, itr_i, data):
+        return_ = super().train(itr_i, data)
+        self.lr_scheduler.step()
+        return return_
+
+    def state_dict(self):
+        state = super().state_dict()
+        state["lr_scheduler_state_dict"] = self.lr_scheduler.state_dict()
+        return state
+
+    def load_state_dict(self, state):
+        if not state.get("lr_scheduler_state_dict", None) is None:
+            self.lr_scheduler.load_state_dict(state.pop("lr_scheduler_state_dict"))
+        super().load_state_dict(state)
+    
     def step(self,
             frames: torch.Tensor,
             masks: torch.Tensor,
