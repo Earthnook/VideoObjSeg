@@ -94,29 +94,3 @@ class VideoMaskRunner(RunnerBase):
         else:
             del self._extra_infos
             self._extra_infos = None
-        
-    # def log_data_info(self, itr_i, data, n_select_frames= 1):
-    #     """ In case of data pre-processing bugs, log images into tensorflow
-    #     each image should be in batch
-    #     """
-    #     videos = data["video"].cpu().numpy()
-    #     masks = data["mask"].cpu().numpy()
-    #     n_objects = data["n_objects"].cpu().numpy()
-
-    #     b, T, C, H, W = videos.shape
-    #     _, _, N, _, _ = masks.shape
-    #     # select frames
-    #     t_i = np.random.choice(T, n_select_frames)
-    #     images = videos[:, t_i].reshape(-1, C, H, W) # (b*t, C, H, W)
-    #     masks = masks[:, t_i].reshape(-1, N, H, W) # (b*t, N, H, W)
-    #     s_images = stack_images(images)
-    #     s_masks = stack_masks(masks) # (1, 1, b*t*H, N*W)
-
-    #     tf_image_summary("data images",
-    #         data= s_images.transpose(0,2,3,1),
-    #         step= itr_i
-    #     )
-    #     tf_image_summary("data masks",
-    #         data=s_masks.transpose(0,2,3,1) * 255, # int are treated as 0-255 scale
-    #         step= itr_i,
-    #     )

@@ -1,4 +1,5 @@
 from vos.utils.quick_args import save__init__args
+from vos.utils.helpers import load_pretrained_snapshot
 
 from exptools.logging import logger
 
@@ -123,10 +124,13 @@ class RunnerBase:
         """
         pass
 
-    def train(self):
+    def train(self, snapshot_filename= None):
         """ The main loop of the experiment.
         """
         self.startup()
+        
+        if not snapshot_filename is None:
+            load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
 
         itr_i = 0
         for epoch_i in range(self.max_optim_epochs):

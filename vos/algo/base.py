@@ -43,7 +43,7 @@ class AlgoBase:
 
     def load_state_dict(self, state):
         if "optim_state_dict" in state:
-            self.optim.state_dict.load_state_dict(state["optim_state_dict"])
+            self.optim.load_state_dict(state["optim_state_dict"])
 
     def train(self, optim_i, data):
         """ Perform one interation of optimization. Under most circumstance, it corresponding to

@@ -12,8 +12,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 2,
-        gpu_per_run= 2,
+        n_gpu= 4,
+        gpu_per_run= 4,
     )
     default_config = get_default_config()
 
@@ -31,23 +31,22 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1, 1, 1],
-        [4, 4, 1],
-        # [4, 4, 4],
+        # [1, 1],
+        # [4, 4, 1e-5],
+        [20,20,5e-5],
     ]
-    dir_names = ["b_size-{}".format(v[0]) for v in values]
+    dir_names = ["train_spec-{}-{}".format(*v[1:]) for v in values]
     keys = [
         ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),
-        ("train_dataset_kwargs", "max_n_objects"),
+        ("algo_kwargs", "learning_rate"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
         # [None, 0],
         # ["/root/VideoObjSeg/data/weightfiles/STM_5ImgData_pretrain_62.1-65.6_DAVIS2017val.pkl", 0],
-        # ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_71.11-41.20_DAVIS2017val.pkl", 0],
-        ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_66.95-36.16_DAVIS2017val.pkl", 0],
+        ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_63.04-62.95_DAVIS2017val.pkl", 0],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [

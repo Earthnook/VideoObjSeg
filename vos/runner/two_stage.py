@@ -1,3 +1,4 @@
+from vos.utils.helpers import load_pretrained_snapshot
 from vos.utils.quick_args import save__init__args
 from vos.runner.video_mask import VideoMaskRunner
 
@@ -84,17 +85,21 @@ class TwoStageRunner(VideoMaskRunner):
             self.max_train_itr = None
         super(TwoStageRunner, self).startup()
 
-    def train(self, itr_i= 0):
+    def train(self, snapshot_filename= None):
         """ one more image dataset to pre-train the network
         """
         self.startup()
+        
+        if not snapshot_filename is None:
+            load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+        
         # pretrain
         itr_i = self._train_loops(
             dataloader= self.pretrain_dataloader,
             eval_dataloader= self.eval_dataloader,
             max_optim_epochs= self.pretrain_optim_epochs,
             max_train_itr= self.max_pretrain_itr,
-            itr_i= itr_i,
+            itr_i= 0,
         )
         logger.log("Finish pretraining, start main train at iteration: {}".format(itr_i))
         torch.cuda.empty_cache()
