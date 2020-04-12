@@ -136,8 +136,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        ["EMN", ],
-        # ["STM", ],
+        # ["EMN", ],
+        ["STM", ],
     ]
     dir_names = ["NN{}".format(*v) for v in values]
     keys = [
@@ -147,7 +147,8 @@ def main(args):
 
     values = [
         # [4,  4,  1e-5, int(1e20), 0.9],
-        [24, 24, 5e-5, int(1e10), 0.9],
+        [24, 24, 1e-5, int(1e20), 0.9],
+        # [24, 24, 5e-5, int(1e10), 0.9],
     ]
     dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]
     keys = [
@@ -171,6 +172,7 @@ def main(args):
     variants, log_dirs = make_variants(*variant_levels)
     for i, variant in enumerate(variants):
         variants[i] = update_config(default_config, variant)
+        variant["pretrain_snapshot_filename"] = "/p300/VideoObjSeg_data/weightfiles/STM_5ImgData_pretrain_62.1-65.6_DAVIS2017val.pkl"
         if args.debug > 0:
             # make sure each complete iteration has gone through and easy for debug
             variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 5

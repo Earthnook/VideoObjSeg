@@ -25,6 +25,9 @@ import copy
 ### My libs
 from vos.datasets.DAVIS import DAVIS_MO_Test
 from vos.models.STM import STM
+from vos.algo.stm_train import STMAlgo
+from vos.models.EMN import EMN
+from vos.algo.emn_train import EMNAlgo
 
 
 torch.set_grad_enabled(False) # Volatile
@@ -40,7 +43,7 @@ def get_arguments():
     parser.add_argument("-o", type=str, help="path to save results", default="./data/STM_test/")
     return parser.parse_args()
 
-debug = True
+debug = False
 if debug:
     # configuration for remote attach and debug
     import ptvsd
@@ -127,9 +130,11 @@ model = nn.DataParallel(STM())
 if torch.cuda.is_available():
     model.cuda()
 model.eval() # turn-off BN
+algo = STMAlgo() # only use its step() method, so no need for any hyper-parameters
+algo.initialize(model)
 
 print('Loading weights:', PTH_PATH)
-model.load_state_dict(torch.load(PTH_PATH))
+model.load_state_dict(torch.load(PTH_PATH)["model_state_dict"])
 
 code_name = '{}_DAVIS_{}{}'.format(MODEL,YEAR,SET)
 print('Start Testing:', code_name)
@@ -141,7 +146,14 @@ for seq, V in enumerate(Testloader):
     num_frames = info['num_frames'][0].item()
     print('[{}]: num_frames: {}, num_objects: {}'.format(seq_name, num_frames, num_objects[0][0]))
     
-    pred, Es = Run_video(Fs, Ms, num_frames, num_objects, Mem_every=5, Mem_number=None)
+    # pred, Es = Run_video(Fs, Ms, num_frames, num_objects, Mem_every=5, Mem_number=None)
+    pred, _ = algo.step(
+        frames= Fs,
+        masks= Ms,
+        n_objects= num_objects,
+        Mem_every=5, Mem_number=None
+    )
+    pred = np.argmax(pred[0].detach().cpu().numpy(), axis= 1).astype(np.uint8)
         
     # Save results for quantitative eval ######################
     test_path = os.path.join(OUTPUT_ROOT, code_name, seq_name)
