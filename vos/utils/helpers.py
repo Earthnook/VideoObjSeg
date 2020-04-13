@@ -156,6 +156,7 @@ def extract_bboxs(masks):
     image size.
         Return a np array with shape (b, 4) as bounding boxes
     """
+    masks = masks.astype(np.uint8)
     b, H, W = masks.shape
     bboxs = np.zeros((b, 4), dtype= np.int32)
     for i, mask in enumerate(masks):
