@@ -112,7 +112,7 @@ def get_default_config():
 def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
-        n_cpu_core= 48,
+        n_cpu_core= 32,
         n_gpu= 4,
         gpu_per_run= 4,
     )
@@ -146,8 +146,9 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [4,  4,  1e-5, int(1e20), 0.9],
-        [24, 24, 1e-5, int(1e20), 0.9],
+        # [4,  4,  1e-5, int(1e10), 0.9],
+        [4,  4,  5e-5, int(1e10), 0.9],
+        # [24, 24, 1e-5, int(1e10), 0.9],
         # [24, 24, 5e-5, int(1e10), 0.9],
     ]
     dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]

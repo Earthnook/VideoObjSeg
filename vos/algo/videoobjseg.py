@@ -45,23 +45,21 @@ class VideoObjSegAlgo(AlgoBase):
             Calculation refering to book: 
             Pattern Recognition and Computer Vision: Second Chinese Conference, PRCV page 423
         """
-        N = pred.shape[0]
-        gtruth = gtruth.astype(np.bool).reshape(N, -1)
-        pred = pred.astype(np.bool).reshape(N, -1)
-
-        intersect = np.sum(gtruth & pred, axis= 1) + smooth
-        union = np.sum(gtruth | pred, axis= 1) + smooth
+        gtruth = gtruth.astype(np.bool)
+        pred = pred.astype(np.bool)
+        intersect = np.sum(gtruth & pred, axis= (-2, -1)) + smooth
+        union = np.sum(gtruth | pred, axis= (-2, -1)) + smooth
 
         # calculate region similarity (a.k.a Intersection over Unit)
         IoU = intersect / union
         # This modification referring to https://github.com/fperazzi/davis/blob/master/python/lib/davis/measures/jaccard.py#L29
-        # NOTE: no need
-        # too_smalls = np.isclose(np.sum(pred, axis= 1), 0) & np.isclose(np.sum(pred, axis= 1), 0)
-        # IoU[too_smalls] = 1
+        IoU[np.isclose(union, 0)] = 1
 
         # calculate contour accuracy
-        accuracy_rate = intersect / (np.sum(pred, axis= 1) + smooth)
-        recall_rate = intersect / (np.sum(gtruth, axis= 1) + smooth)
+        # NOTE: This calculation is not accurate due to experiment speed, 
+        # please check official evaluation server
+        accuracy_rate = intersect / (np.sum(pred, axis= (-2, -1)) + smooth)
+        recall_rate = intersect / (np.sum(gtruth, axis= (-2, -1)) + smooth)
         contour_acc = 2 * (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate)
 
         return dict(
