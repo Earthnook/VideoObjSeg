@@ -172,7 +172,6 @@ def main(args):
     variants, log_dirs = make_variants(*variant_levels)
     for i, variant in enumerate(variants):
         variants[i] = update_config(default_config, variant)
-        variant["pretrain_snapshot_filename"] = "/p300/VideoObjSeg_data/weightfiles/STM_5ImgData_pretrain_62.1-65.6_DAVIS2017val.pkl"
         if args.debug > 0:
             # make sure each complete iteration has gone through and easy for debug
             variants[i]["runner_kwargs"]["pretrain_optim_epochs"] = 5
