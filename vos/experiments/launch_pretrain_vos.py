@@ -146,8 +146,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [4,  4,  1e-5, int(1e10), 0.9],
-        [4,  4,  5e-5, int(1e10), 0.9],
+        [4,  4,  1e-5, int(1e10), 0.9],
+        # [8,  8,  5e-5, int(1e10), 0.9],
         # [24, 24, 1e-5, int(1e10), 0.9],
         # [24, 24, 5e-5, int(1e10), 0.9],
     ]
