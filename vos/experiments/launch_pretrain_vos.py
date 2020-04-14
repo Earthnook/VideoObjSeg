@@ -51,10 +51,10 @@ def get_default_config():
             resolution= exp_image_size,
             resize_method= "crop",
             affine_kwargs= dict(
-                angle_max= 90.,
-                translate_max= 50.,
-                scale_max= 2.,
-                shear_max= 50.,
+                angle_max= 5.,
+                translate_max= 5.,
+                scale_max= 0.05,
+                shear_max= 5.,
             ),
             TPS_kwargs= dict(
                 scale= 0.1,

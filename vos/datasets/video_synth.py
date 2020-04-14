@@ -18,10 +18,10 @@ class VideoSynthDataset(Dataset):
             resolution= (384, 384), # output video resolution
             resize_method= "crop", # choose between "crop", "resize"
             affine_kwargs= dict(
-                angle_max= 180.,
-                translate_max= 50.,
-                scale_max= 2., # NOTE: this is the exponent of e
-                shear_max= 50.
+                angle_max= 5.,
+                translate_max= 5.,
+                scale_max= 0.05, # NOTE: this is the exponent of e
+                shear_max= 5.
             ), # a dict of kwargs providing for torchvision.transforms.functional.affine
             TPS_kwargs= dict(
                 scale= 0.1,
