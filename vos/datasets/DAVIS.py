@@ -96,7 +96,7 @@ class DAVIS_2017_TrainVal(DAVIS_MO_Test):
             root,
             mode= "train", # choose between "train", "val"
             resolution= "480p",
-            max_n_objects= 1,
+            max_n_objects= 12,
             is_subset= False, # if subset_mode, it will choose a fixed 3 videos
         ):
         super(DAVIS_2017_TrainVal, self).__init__(root,
