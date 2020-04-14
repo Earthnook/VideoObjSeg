@@ -53,6 +53,7 @@ class VideoObjSegAlgo(AlgoBase):
         # calculate region similarity (a.k.a Intersection over Unit)
         IoU = intersect / union
         # This modification referring to https://github.com/fperazzi/davis/blob/master/python/lib/davis/measures/jaccard.py#L29
+        # And https://github.com/suhwan-cho/davis-evaluation/blob/master/davis2017/metrics.py#L37
         IoU[np.isclose(union, 0)] = 1
 
         # calculate contour accuracy
