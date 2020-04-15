@@ -124,8 +124,8 @@ def main(args):
 
     values = [
         [0., 10., 5., 0., 0.1],
-        [3., 5., 5., 0., 0.1], # a seemingly good by my self
-        [30., 0., 25., 0., 0.15], # another possible hyper-param
+        # [3., 5., 5., 0., 0.1], # a seemingly good by my self
+        # [30., 0., 25., 0., 0.15], # another possible hyper-param
         # [0., 10., 0.05, 0., 0.1],
         # [5, 5, 0.05, 5, 0.1],
     ]
@@ -152,8 +152,8 @@ def main(args):
     values = [
         # [4,  4,  1e-5, int(1e10), 0.9],
         # [8,  8,  5e-5, int(1e10), 0.9],
-        # [24, 24, 1e-5, int(1e10), 0.9],
-        [24, 24, 5e-5, int(1e10), 0.9],
+        [24, 24, 1e-5, int(1e10), 0.9],
+        # [24, 24, 5e-5, int(1e10), 0.9],
     ]
     dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]
     keys = [
@@ -166,7 +166,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1,],
+        # [1,],
+        [5,],
     ]
     dir_names = ["pixel_dilate-{}".format(*v) for v in values]
     keys = [
