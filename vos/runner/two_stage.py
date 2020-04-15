@@ -91,7 +91,9 @@ class TwoStageRunner(VideoMaskRunner):
         self.startup()
         
         if not snapshot_filename is None:
-            load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+            itr_i = load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+        else:
+            itr_i = 0
         
         # pretrain
         itr_i = self._train_loops(
@@ -99,7 +101,7 @@ class TwoStageRunner(VideoMaskRunner):
             eval_dataloader= self.eval_dataloader,
             max_optim_epochs= self.pretrain_optim_epochs,
             max_train_itr= self.max_pretrain_itr,
-            itr_i= 0,
+            itr_i= itr_i,
         )
         logger.log("Finish pretraining, start main train at iteration: {}".format(itr_i))
         torch.cuda.empty_cache()

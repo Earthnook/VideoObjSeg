@@ -39,7 +39,7 @@ class VideoObjSegAlgo(AlgoBase):
         """
         raise NotImplementedError
 
-    def calc_performance(self, pred, gtruth, smooth= 0):
+    def calc_performance(self, pred, gtruth, smooth= 1):
         """ Given the statistics (in same shape (N, ...)) and caculate average value in this batch
             NOTE: the average is only taken on 0-th dimension
             Calculation refering to book: 

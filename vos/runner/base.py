@@ -130,9 +130,10 @@ class RunnerBase:
         self.startup()
         
         if not snapshot_filename is None:
-            load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+            itr_i = load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+        else:
+            itr_i = 0
 
-        itr_i = 0
         for epoch_i in range(self.max_optim_epochs):
             for batch_i, data in tqdm(enumerate(self.dataloader)):
                 itr_i += 1
