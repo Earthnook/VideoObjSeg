@@ -96,7 +96,8 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
             log_params= config,
             snapshot_mode= "last",
         ):
-        runner.train(snapshot_filename= config["pretrain_snapshot_filename"])
+        # runner.train(snapshot_filename= config["pretrain_snapshot_filename"])
+        runner.train(snapshot_filename= os.path.join(log_dir, f"run_{run_ID}", "params.pkl"))
 
 
 def main(*args):
