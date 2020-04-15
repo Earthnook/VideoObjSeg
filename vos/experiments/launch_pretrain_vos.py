@@ -51,14 +51,15 @@ def get_default_config():
             resolution= exp_image_size,
             resize_method= "crop",
             affine_kwargs= dict(
-                angle_max= 5.,
+                angle_max= 0.,
                 translate_max= 10.,
                 scale_max= 5.,
-                shear_max= 5.,
+                shear_max= 0.,
             ),
             TPS_kwargs= dict(
                 scale= 0.1,
                 n_points= 5,
+                keep_filled= True,
             ),
             dilate_scale= 5,
         ),
@@ -123,6 +124,8 @@ def main(args):
 
     values = [
         [0., 10., 5., 0., 0.1],
+        [3., 5., 5., 0., 0.1], # a seemingly good by my self
+        [30., 0., 25., 0., 0.15], # another possible hyper-param
         # [0., 10., 0.05, 0., 0.1],
         # [5, 5, 0.05, 5, 0.1],
     ]

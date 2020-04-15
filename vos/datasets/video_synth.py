@@ -27,6 +27,7 @@ class VideoSynthDataset(Dataset):
             TPS_kwargs= dict(
                 scale= 0.1, # the ratio to the smallest object bbox size
                 n_points= 5, # no less than 3
+                keep_filled= True,
             ),
             dilate_scale= 5, # the number of pixels to dilate the masks
         ):
@@ -99,8 +100,8 @@ class VideoSynthDataset(Dataset):
         target_cps = interest_cps + \
             np.random.uniform(-jitter_scale, jitter_scale)
 
-        tps_image = image_tps_transform(image, interest_cps, target_cps, keep_filled= False)
-        tps_mask = image_tps_transform(mask, interest_cps, target_cps, keep_filled= False)
+        tps_image = image_tps_transform(image, interest_cps, target_cps, keep_filled= self.TPS_kwargs["keep_filled"])
+        tps_mask = image_tps_transform(mask, interest_cps, target_cps, keep_filled= self.TPS_kwargs["keep_filled"])
         return tps_image, tps_mask
 
     def random_tps_transform(self, image, mask):
@@ -168,8 +169,8 @@ class VideoSynthDataset(Dataset):
             for image, mask in zip(images, masks):
                 video, m_video = [image], [mask]
                 for frame_i in range(self.n_frames-1):
-                    frame, m_frame = self.random_affine_transform(image, mask)
-                    frame, m_frame = self.random_tps_transform(frame, m_frame)
+                    frame, m_frame = self.random_tps_transform(image, mask)
+                    frame, m_frame = self.random_affine_transform(frame, m_frame)
                     video.append(frame)
                     m_video.append(m_frame)
                 try:
