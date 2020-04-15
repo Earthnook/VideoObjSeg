@@ -125,7 +125,7 @@ def main(args):
     values = [
         [0., 10., 5., 0., 0.1],
         # [3., 5., 5., 0., 0.1], # a seemingly good by my self
-        # [30., 0., 25., 0., 0.15], # another possible hyper-param
+        # [30., 5., 25., 0., 0.15], # another possible hyper-param
         # [0., 10., 0.05, 0., 0.1],
         # [5, 5, 0.05, 5, 0.1],
     ]
