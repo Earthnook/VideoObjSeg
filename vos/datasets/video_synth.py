@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.transforms import functional as visionF
 import numpy as np
+import cv2
 
 from vos.utils.quick_args import save__init__args
 from vos.utils.image_shaper import random_crop_CHW
@@ -19,12 +20,12 @@ class VideoSynthDataset(Dataset):
             resize_method= "crop", # choose between "crop", "resize"
             affine_kwargs= dict(
                 angle_max= 5.,
-                translate_max= 5.,
-                scale_max= 0.05, # NOTE: this is the exponent of e
+                translate_max= 10., # the percentage to the H, W of the image
+                scale_max= 5., # the percentage of increase/decrease the shape of image
                 shear_max= 5.
             ), # a dict of kwargs providing for torchvision.transforms.functional.affine
             TPS_kwargs= dict(
-                scale= 0.1,
+                scale= 0.1, # the ratio to the smallest object bbox size
                 n_points= 5, # no less than 3
             ),
             dilate_scale= 5, # the number of pixels to dilate the masks
@@ -37,8 +38,9 @@ class VideoSynthDataset(Dataset):
         """ randomly generate a transform arguments, and apply it to both image and mask.
         Considering torchvision transform can only transform a single image, in requires
         some meanuvers to do with mask.
-            NOTE: both arguments are torh.Tensor
+            NOTE: both arguments are torh.Tensor in shape (c, H, W)
         """
+        image_hw = np.array(image.shape[1:])
         affine_ranges = self.affine_kwargs
         # NOTE: np.random.uniform generates value for this dictionary
         affine_kwargs = dict(
@@ -48,13 +50,12 @@ class VideoSynthDataset(Dataset):
                 size= (1,)
             ).item(),
             translate = np.random.uniform(
-                low= -affine_ranges["translate_max"],
-                high= affine_ranges["translate_max"],
-                size= (2,)
+                low= -affine_ranges["translate_max"] * image_hw / 100,
+                high= affine_ranges["translate_max"] * image_hw / 100,
             ).tolist(),
             scale = np.random.uniform(
-                low= np.exp(-affine_ranges["scale_max"]),
-                high= np.exp(affine_ranges["scale_max"]),
+                low= 1. - (affine_ranges["scale_max"]/100.),
+                high= 1. + (affine_ranges["scale_max"]/100.),
                 size= (1,)
             ).item(),
             shear = np.random.uniform(
@@ -88,11 +89,15 @@ class VideoSynthDataset(Dataset):
 
         return image, mask
 
-    def tps_transform(self, image, mask, interest_cps, mask_area):
-        xs, ys = interest_cps[:, 0], interest_cps[:, 1]
-        jitter_scale = np.sqrt(mask_area) / (mask.shape[0]-1) * self.TPS_kwargs["scale"]
+    def tps_transform(self, image, mask, interest_cps, obj_shape):
+        """
+        @ Args:
+            interest_cps: ndarray with shape (n, 2) where xs === interest_cps[:, 0]
+            obj_shape: np.array((H, W)) of the object, not the entire image.
+        """
+        jitter_scale = (obj_shape * self.TPS_kwargs["scale"]).reshape((1,2))
         target_cps = interest_cps + \
-            np.random.uniform(-jitter_scale, jitter_scale, size= interest_cps.shape)
+            np.random.uniform(-jitter_scale, jitter_scale)
 
         tps_image = image_tps_transform(image, interest_cps, target_cps, keep_filled= False)
         tps_mask = image_tps_transform(mask, interest_cps, target_cps, keep_filled= False)
@@ -101,18 +106,27 @@ class VideoSynthDataset(Dataset):
     def random_tps_transform(self, image, mask):
         """ Apply a random TPS mapping onto both image and mask (they have the same TPS 
         transformation)
-        NOTE: image is in (C, H, W) shape
+        NOTE: image is in (C, H, W) shape and mask should include background channel
         """
         image = image.numpy()
-        mask = mask.numpy()
+        mask = mask.numpy().astype(np.uint8)
 
         _, ys, xs = np.nonzero(mask[1:] == 1)
+        # get bounding box size for all objects
+        # NOTE: only extract the minimum size
+        bbox_shape = np.array(mask.shape[1:])
+        for m in mask[1:]:
+            _, _, Wlen, Hlen = cv2.boundingRect(m)
+            if Hlen > 0 and bbox_shape[0] > Hlen:
+                bbox_shape[0] = Hlen
+            if Wlen > 0 and bbox_shape[1] > Wlen:
+                bbox_shape[1] = Wlen
         try:
             idxs = np.random.choice(len(xs), self.TPS_kwargs["n_points"])
             interest_cps = np.vstack((xs[idxs], ys[idxs])).T
             tps_image, tps_mask = self.tps_transform(
                 image, mask,
-                interest_cps, len(xs)
+                interest_cps, bbox_shape,
             )
         except:
             x_linspace = np.linspace(0, image.shape[2], self.TPS_kwargs["n_points"])
@@ -122,7 +136,7 @@ class VideoSynthDataset(Dataset):
             interest_cps = np.stack([xs, ys]).T
             tps_image, tps_mask = self.tps_transform(
                 image, mask,
-                interest_cps, len(xs)
+                interest_cps, bbox_shape,
             )
 
         return torch.from_numpy(tps_image), torch.from_numpy(tps_mask)
