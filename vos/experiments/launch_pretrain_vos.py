@@ -51,14 +51,15 @@ def get_default_config():
             resolution= exp_image_size,
             resize_method= "crop",
             affine_kwargs= dict(
-                angle_max= 5.,
-                translate_max= 5.,
-                scale_max= 0.05,
-                shear_max= 5.,
+                angle_max= 0.,
+                translate_max= 10.,
+                scale_max= 5.,
+                shear_max= 0.,
             ),
             TPS_kwargs= dict(
                 scale= 0.1,
                 n_points= 5,
+                keep_filled= True,
             ),
             dilate_scale= 5,
         ),
@@ -94,8 +95,8 @@ def get_default_config():
             clip_grad_norm= 1e9,
             learning_rate= 1e-5,
             weight_decay= 0,
-            lr_power= 0.9,
-            lr_max_iter= int(5e9),
+            lr_power= 0.9, # usable only under EMN solution
+            lr_max_iter= int(5e9), # usable only under EMN solution
             train_step_kwargs= dict(Mem_every= 1),
             eval_step_kwargs= dict(Mem_every= 5),
         ),
@@ -122,7 +123,10 @@ def main(args):
     variant_levels = list()
 
     values = [
-        [0., 10., 0.05, 0., 0.1],
+        [0., 10., 5., 0., 0.1],
+        # [3., 5., 5., 0., 0.1], # a seemingly good by my self
+        # [30., 0., 25., 0., 0.15], # another possible hyper-param
+        # [0., 10., 0.05, 0., 0.1],
         # [5, 5, 0.05, 5, 0.1],
     ]
     dir_names = ["synth{}-{}-{}-{}-{}".format(*v) for v in values]
@@ -146,9 +150,9 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [4,  4,  1e-5, int(1e10), 0.9],
+        # [4,  4,  1e-5, int(1e10), 0.9],
         # [8,  8,  5e-5, int(1e10), 0.9],
-        # [24, 24, 1e-5, int(1e10), 0.9],
+        [24, 24, 1e-5, int(1e10), 0.9],
         # [24, 24, 5e-5, int(1e10), 0.9],
     ]
     dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]
@@ -162,7 +166,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1,],
+        # [1,],
+        [5,],
     ]
     dir_names = ["pixel_dilate-{}".format(*v) for v in values]
     keys = [
