@@ -46,7 +46,7 @@ class VideoObjSegAlgo(AlgoBase):
             Calculation refering to book: 
             Pattern Recognition and Computer Vision: Second Chinese Conference, PRCV page 423
         @ Args:
-            pred: ndarray with shape (B, T, N, H, W) with or without background channel
+            pred: ndarray with shape (B, T, N, H, W) with background channel
             grtuth: ndarray with the same shape as pred
             n_objects: ndarray with shape (B,) due to different n_objects in each data among batch
         """
