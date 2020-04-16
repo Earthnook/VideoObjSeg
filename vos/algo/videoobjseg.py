@@ -1,4 +1,5 @@
 from vos.algo.base import AlgoBase, TrainInfo, EvalInfo
+from vos.models.loss import MultiObjectsBCELoss
 from vos.utils.quick_args import save__init__args
 
 from torchvision import transforms
@@ -18,7 +19,7 @@ class VideoObjSegAlgo(AlgoBase):
 
     def __init__(self,
             clip_grad_norm= 1e9,
-            loss_fn= nn.BCELoss(),
+            loss_fn= MultiObjectsBCELoss(include_bg= False),
             train_step_kwargs= dict(),
             eval_step_kwargs= dict(),
             include_bg_loss= False,
@@ -99,7 +100,7 @@ class VideoObjSegAlgo(AlgoBase):
             data: a dictionary with following keys
                 "video": a torch.Tensor with size (b, t, C, H, W), usually C == 3
                 "mask": a torch.Tenwor with size (b, t, n, H, W) with one-hot encoding
-                "n_objects": max number of objects
+                "n_objects": a batch-wise int telling how many objects in among batch of data
         """
         self.optim.zero_grad()
         preds, loss = self.step(
@@ -114,8 +115,8 @@ class VideoObjSegAlgo(AlgoBase):
         preds = preds.cpu().numpy()
         gtruths = data["mask"].cpu().numpy()
 
-        loss_idx = 0 if self.include_bg_loss else 1
-        _, _, n, H, W = gtruths.shape
+        # loss_idx = 0 if self.include_bg_loss else 1
+        # _, _, n, H, W = gtruths.shape
         # p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         # g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         performance_status = self.calc_performance(preds, gtruths, n_objects= data["n_objects"])

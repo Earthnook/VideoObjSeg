@@ -19,7 +19,7 @@ class STMAlgo(VideoObjSegAlgo):
         @ Args:
             frames: batch-wise, shape (b, t, C, H, W)
             masks: batch-wise, shape (b, t, n, H, W)
-            n_objects: A int telling how many objects (max) in this batch of data
+            n_objects: batch-wise int telling how many objects in among batch of data
         """
         n_frames = frames.size()[1]
         # initialize storage tensors
@@ -65,11 +65,8 @@ class STMAlgo(VideoObjSegAlgo):
         pred = (estimates.detach() == estimates.detach().max(dim= 2, keepdim= True)[0])
         pred = pred.to(dtype= torch.uint8)
 
-        # select loss calculation
-        loss_idx = 0 if self.include_bg_loss else 1
-        b, t, n, H, W = masks.shape
-        p = estimates[:,1:,loss_idx:].reshape(-1, H, W)
-        g = masks[:,1:,loss_idx:].reshape(-1, H, W).to(dtype= torch.float32)
+        p = estimates[:,1:]
+        g = masks[:,1:].to(dtype= torch.float32)
 
         # calculate loss and return
-        return pred, self.loss_fn(p, g) # only query frames are used
+        return pred, self.loss_fn(p, g, n_objects) # only query frames are used

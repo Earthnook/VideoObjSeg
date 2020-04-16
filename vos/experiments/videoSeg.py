@@ -16,6 +16,7 @@ from vos.datasets.video_synth import VideoSynthDataset
 from vos.datasets.frame_skip import FrameSkipDataset
 from vos.datasets.random_subset import RandomSubset
 
+from vos.models.loss import MultiObjectsBCELoss
 from vos.models.STM import STM
 from vos.algo.stm_train import STMAlgo
 from vos.models.EMN import EMN
@@ -66,10 +67,16 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     if config["solution"] == "STM":
         model = DataParallel(STM(**config["model_kwargs"]))
-        algo = STMAlgo(**config["algo_kwargs"])
+        algo = STMAlgo(
+            loss_fn= MultiObjectsBCELoss(include_bg= config["algo_kwargs"]["include_bg_loss"]),
+            **config["algo_kwargs"]
+        )
     elif config["solution"] == "EMN":
         model = DataParallel(EMN(**config["model_kwargs"]))
-        algo = EMNAlgo(**config["algo_kwargs"])
+        algo = EMNAlgo(
+            loss_fn= MultiObjectsBCELoss(include_bg= config["algo_kwargs"]["include_bg_loss"]),
+            **config["algo_kwargs"]
+        )
     else:
         raise NotImplementedError("Cannnot deploy proper neural network solution")
     model.train()
