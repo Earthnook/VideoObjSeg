@@ -54,16 +54,14 @@ class VideoObjSegAlgo(AlgoBase):
         pred = pred.astype(np.bool)
         intersect = np.sum(gtruth & pred, axis= (-2, -1)) + smooth
         union = np.sum(gtruth | pred, axis= (-2, -1)) + smooth
+        loss_idx = 0 if self.include_bg_loss else 1
 
         # calculate region similarity (a.k.a Intersection over Unit)
         IoU = intersect / union # (B, T, N)
         # calculate average IoU for each data in this batch
         IoU_mean = [] # a list of (T*n,)
         for b_i, iou in enumerate(IoU):
-            if not self.include_bg_loss:
-                iou_ = iou[:, :n_objects[b_i]]
-            else:
-                iou_ = iou[:, :(n_objects[b_i]+1)]
+            iou_ = iou[:, loss_idx:(n_objects[b_i]+loss_idx)]
             IoU_mean.append(iou_.flatten())
         IoU_mean = np.nanmean(np.hstack(IoU_mean))
 
@@ -80,10 +78,7 @@ class VideoObjSegAlgo(AlgoBase):
         contour_acc = 2 * (accuracy_rate * recall_rate) / (accuracy_rate + recall_rate) # (B, T, N)
         acc_mean = [] # a list of (T*n,)
         for b_i, acc in enumerate(contour_acc):
-            if not self.include_bg_loss:
-                acc_ = acc[:, :n_objects[b_i]]
-            else:
-                acc_ = acc[:, :(n_objects[b_i]+1)]
+            acc_ = acc[:, loss_idx:(n_objects[b_i]+loss_idx)]
             acc_mean.append(acc_.flatten())
         acc_mean = np.nanmean(np.hstack(acc_mean))
 
@@ -115,7 +110,6 @@ class VideoObjSegAlgo(AlgoBase):
         preds = preds.cpu().numpy()
         gtruths = data["mask"].cpu().numpy()
 
-        # loss_idx = 0 if self.include_bg_loss else 1
         # _, _, n, H, W = gtruths.shape
         # p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         # g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
@@ -155,8 +149,7 @@ class VideoObjSegAlgo(AlgoBase):
         preds = preds.cpu().numpy()
         gtruths = data["mask"].cpu().numpy()
 
-        loss_idx = 0 if self.include_bg_loss else 1
-        _, _, n, H, W = gtruths.shape
+        # _, _, n, H, W = gtruths.shape
         # p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         # g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
         performance_status = self.calc_performance(preds, gtruths, n_objects= data["n_objects"])
