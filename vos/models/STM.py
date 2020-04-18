@@ -229,7 +229,7 @@ class STM(nn.Module):
 
         (frame, masks), pad = pad_divide_by([frame, masks], 16, (frame.size()[2], frame.size()[3]))
 
-        # make batch arg list
+        # make batch arg list for each object
         B_list = {'f':[], 'm':[], 'o':[]}
         for o in range(1, num_objects+1): # 1 - no
             B_list['f'].append(frame)
@@ -240,7 +240,9 @@ class STM(nn.Module):
         # make Batch
         B_ = {}
         for arg in B_list.keys():
-            B_[arg] = torch.cat(B_list[arg], dim=0)
+            item_ = torch.stack(B_list[arg]) # (no, B, H, W) for 'm'; (no, B, C, H, W) for ‘f’
+            item_ = item_.transpose(0, 1).contiguous()
+            B_[arg] = item_.view(-1, *(item_.shape[2:])) # (B*no, H, W) for 'm'
 
         r4, _, _, _, _ = self.Encoder_M(B_['f'], B_['m'], B_['o'])
         k4, v4 = self.KV_M_r4(r4) # batch_size*num_objects, 128 and 512, H/16, W/16
