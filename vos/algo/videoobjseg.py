@@ -111,9 +111,9 @@ class VideoObjSegAlgo(AlgoBase):
         gtruths = data["mask"].cpu().numpy()
 
         # _, _, n, H, W = gtruths.shape
-        # p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
-        # g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
-        performance_status = self.calc_performance(preds, gtruths, n_objects= data["n_objects"])
+        p = preds[:,1:]
+        g = gtruths[:,1:]
+        performance_status = self.calc_performance(p, g, n_objects= data["n_objects"])
     
         return TrainInfo(
                 loss= loss.detach().cpu().numpy(), 
@@ -150,9 +150,9 @@ class VideoObjSegAlgo(AlgoBase):
         gtruths = data["mask"].cpu().numpy()
 
         # _, _, n, H, W = gtruths.shape
-        # p = preds[:,1:,loss_idx:].reshape(-1, n-1, H, W)
-        # g = gtruths[:,1:,loss_idx:].reshape(-1, n-1, H, W)
-        performance_status = self.calc_performance(preds, gtruths, n_objects= data["n_objects"])
+        p = preds[:,1:]
+        g = gtruths[:,1:]
+        performance_status = self.calc_performance(p, g, n_objects= data["n_objects"])
 
         return EvalInfo(
                 loss= loss.cpu().numpy(),
