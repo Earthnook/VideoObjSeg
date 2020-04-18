@@ -11,6 +11,7 @@ def get_default_config():
     dataset_root_path = path.join(root_path, "DAVIS-2017-trainval-480p/")
     exp_image_size= (384, 384)
     max_n_objects = 1
+    sort_anns = True,
     return dict(
         exp_image_size= exp_image_size,
         max_n_objects = max_n_objects,
@@ -20,7 +21,7 @@ def get_default_config():
             root= path.join(root_path, "COCO-2017-train/"),
             mode= "train",
             max_n_objects= max_n_objects,
-            sort_anns= True,
+            sort_anns= sort_anns,
         ),
         ecssd_kwargs = dict(
             root = path.join(root_path, "ECSSD/"),
@@ -31,10 +32,12 @@ def get_default_config():
         voc_kwargs = dict(
             root = path.join(root_path, "VOC/"),
             max_n_objects = max_n_objects,
+            sort_anns = sort_anns,
         ),
         sbd_kwargs = dict(
             root = path.join(root_path, "SBD/"),
             max_n_objects = max_n_objects,
+            sort_objects = sort_anns,
         ),
         train_dataset_kwargs = dict(
             root= dataset_root_path,
