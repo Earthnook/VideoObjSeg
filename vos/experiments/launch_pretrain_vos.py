@@ -32,7 +32,7 @@ def get_default_config():
         voc_kwargs = dict(
             root = path.join(root_path, "VOC/"),
             max_n_objects = max_n_objects,
-            sort_anns = sort_anns,
+            sort_masks = sort_anns,
         ),
         sbd_kwargs = dict(
             root = path.join(root_path, "SBD/"),
@@ -169,8 +169,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1,],
-        [5,],
+        [1,],
+        # [5,],
     ]
     dir_names = ["pixel_dilate-{}".format(*v) for v in values]
     keys = [
