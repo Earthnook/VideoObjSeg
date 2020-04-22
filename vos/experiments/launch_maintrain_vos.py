@@ -21,8 +21,8 @@ def main(args):
     variant_levels = list()
 
     values = [
-        ["EMN", ],
-        # ["STM", ],
+        # ["EMN", ],
+        ["STM", ],
     ]
     dir_names = ["NN{}".format(*v) for v in values]
     keys = [
@@ -32,8 +32,8 @@ def main(args):
 
     values = [
         # [1, 1],
-        # [4, 4, 1e-5],
-        [20,20,5e-5],
+        [24, 24, 1e-5],
+        # [20,20,5e-5],
     ]
     dir_names = ["train_spec-{}-{}".format(*v[1:]) for v in values]
     keys = [
@@ -45,8 +45,9 @@ def main(args):
 
     values = [
         # [None, 0],
-        # ["/root/VideoObjSeg/data/weightfiles/STM_5ImgData_pretrain_62.1-65.6_DAVIS2017val.pkl", 0],
-        ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_63.04-62.95_DAVIS2017val.pkl", 0],
+        ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl", 0],
+        # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl", 0],
+        # ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_63.04-62.95_DAVIS2017val.pkl", 0],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [
