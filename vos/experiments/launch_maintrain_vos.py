@@ -31,15 +31,17 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1, 1],
-        [24, 24, 1e-5],
-        # [20,20,5e-5],
+        # [1, 1, int(1e10), 0.9],
+        [24, 24, 1e-5, int(1e10), 0.9],
+        # [20,20,5e-5, int(1e10), 0.9],
     ]
-    dir_names = ["train_spec-{}-{}".format(*v[1:]) for v in values]
+    dir_names = ["train_spec-{}-{}-{}-{}".format(*v[1:]) for v in values]
     keys = [
         ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),
         ("algo_kwargs", "learning_rate"),
+        ("algo_kwargs", "lr_max_iter"),
+        ("algo_kwargs", "lr_power"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
@@ -47,7 +49,7 @@ def main(args):
         # [None, 0],
         ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl", 0],
         # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl", 0],
-        # ["/root/VideoObjSeg/data/weightfiles/EMN_5ImgData_pretrain_63.04-62.95_DAVIS2017val.pkl", 0],
+        # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl", 0],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [
