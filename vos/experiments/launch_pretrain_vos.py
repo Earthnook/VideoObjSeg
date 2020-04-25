@@ -92,6 +92,8 @@ def get_default_config():
         ), # for a customized DataLoader
         model_kwargs= dict(
             train_bn= False,
+            use_target= True,
+            use_aspp= True,
         ),
         algo_kwargs= dict(
             include_bg_loss= False,
@@ -118,7 +120,7 @@ def main(args):
     affinity_code = encode_affinity(
         n_cpu_core= 32,
         n_gpu= 4,
-        gpu_per_run= 4,
+        gpu_per_run= 1,
     )
     default_config = get_default_config()
 
@@ -126,37 +128,54 @@ def main(args):
     variant_levels = list()
 
     values = [
-        [0., 10., 5., 0., 0.1], # paper hyper-param
-        # [3., 5., 5., 0., 0.1], # a seemingly good by myself
-        # [30., 5., 25., 0., 0.15], # another possible hyper-param
-        # [0., 10., 0.05, 0., 0.1],
-        # [5, 5, 0.05, 5, 0.1],
+        [(480, 846) for _ in range(4)],
+        # [(384, 384) for _ in range(4)],
     ]
-    dir_names = ["synth{}-{}-{}-{}-{}".format(*v) for v in values]
+    dir_names = ["img_res-{}".format(v[0]) for v in values]
+    keys = [
+        ("exp_image_size", ),
+        ("videosynth_dataset_kwargs", "resolution", ),
+        ("frame_skip_dataset_kwargs", "resolution", ),
+        ("random_subset_kwargs", "resolution", ),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        [0., 10., 5., 0., 0.1, 5], # paper hyper-param
+        # [3., 5., 5., 0., 0.1, 1], # a seemingly good by myself
+        # [30., 5., 25., 0., 0.15, 5], # another possible hyper-param
+        # [0., 10., 0.05, 0., 0.1],
+    ]
+    dir_names = ["synth{}-{}-{}-{}-{}-{}".format(*v) for v in values]
     keys = [
         ("videosynth_dataset_kwargs", "affine_kwargs", "angle_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "translate_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "scale_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "shear_max"),
         ("videosynth_dataset_kwargs", "TPS_kwargs", "scale"),
+        ("videosynth_dataset_kwargs", "dilate_scale"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # ["EMN", ],
-        ["STM", ],
+        ["EMN", True, True],
+        ["EMN", False, True],
+        ["EMN", True, False],
+        ["STM", False, False],
     ]
-    dir_names = ["NN{}".format(*v) for v in values]
+    dir_names = ["nn{}-atten{}-aspp{}".format(*v) for v in values]
     keys = [
         ("solution", ),
+        ("model_kwargs", "use_target",),
+        ("model_kwargs", "use_aspp",),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
         # [4,  4,  1e-5, int(1e10), 0.9],
-        # [4,  4,  1e-4, int(1e10), 0.9],
+        [1,  1,  1e-5, int(1e10), 0.9],
         # [8,  8,  5e-5, int(1e10), 0.9],
-        [24, 24, 1e-5, int(1e10), 0.9],
+        # [24, 24, 1e-5, int(1e10), 0.9],
         # [20, 20, 5e-5, int(1e10), 0.9],
     ]
     dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]
@@ -166,16 +185,6 @@ def main(args):
         ("algo_kwargs", "learning_rate"),
         ("algo_kwargs", "lr_max_iter"),
         ("algo_kwargs", "lr_power"),
-    ]
-    variant_levels.append(VariantLevel(keys, values, dir_names))
-
-    values = [
-        # [1,],
-        [5,],
-    ]
-    dir_names = ["pixel_dilate-{}".format(*v) for v in values]
-    keys = [
-        ("videosynth_dataset_kwargs", "dilate_scale"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

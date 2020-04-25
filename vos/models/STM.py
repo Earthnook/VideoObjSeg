@@ -184,7 +184,7 @@ class KeyValue(nn.Module):
 
 
 class STM(nn.Module):
-    def __init__(self, train_bn= False):
+    def __init__(self, train_bn= False, **kwargs):
         super(STM, self).__init__()
         self.train_bn = train_bn
         self.Encoder_M = Encoder_M() 

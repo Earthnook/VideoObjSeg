@@ -22,17 +22,21 @@ def main(args):
     variant_levels = list()
 
     values = [
-        # ["EMN", ],
-        ["STM", ],
+        ["EMN", True, True],
+        ["EMN", False, True],
+        ["EMN", True, False],
+        ["STM", False, False],
     ]
-    dir_names = ["NN{}".format(*v) for v in values]
+    dir_names = ["nn{}-atten{}-aspp{}".format(*v) for v in values]
     keys = [
         ("solution", ),
+        ("model_kwargs", "use_target",),
+        ("model_kwargs", "use_aspp",),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1, 1, int(1e10), 0.9],
+        # [1, 1, 1e-4, int(1e10), 0.9],
         [24, 24, 1e-5, int(1e10), 0.9],
         # [20,20,5e-5, int(1e10), 0.9],
     ]

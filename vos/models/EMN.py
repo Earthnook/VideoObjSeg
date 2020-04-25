@@ -6,12 +6,15 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+import warnings
+
 class SiamQueryEncoder(STM.Encoder_Q):
     """ Siamese query encoder.
     Considering saving the memory, expand operation will be done here.
         And all output tensors will have leading dim (b*no, )
     """
-    def __init__(self, train_bn= True):
+    def __init__(self, use_target= True):
+        self.use_target = use_target
         super(SiamQueryEncoder, self).__init__()
 
     def forward(self, in_f, target):
@@ -23,6 +26,22 @@ class SiamQueryEncoder(STM.Encoder_Q):
             feat: torch.Tensor with shape (b*no, c, h', w')
             other tensors are also with (b*no) as leading dimension
         """
+        b, no = target.shape[:2]
+        if self.use_target:
+            # calculating feature from cropped target image
+            target = target.view(b*no,
+                target.shape[2],
+                target.shape[3],
+                target.shape[4]
+            )
+            f_tar = (target - self.mean) / self.std
+            x_tar = self.conv1(f_tar) 
+            x_tar = self.bn1(x_tar)
+            c1_tar = self.relu(x_tar)   # 1/2, 64
+            x_tar = self.maxpool(c1_tar)  # 1/4, 64
+            r2_tar = self.res2(x_tar)   # 1/4, 256
+            r3_tar = self.res3(r2_tar) # 1/8, 512
+            r4_tar = self.res4(r3_tar) # 1/8, 1024
 
         # calculating feature from query image
         f = (in_f - self.mean) / self.std
@@ -34,22 +53,6 @@ class SiamQueryEncoder(STM.Encoder_Q):
         r3 = self.res3(r2) # 1/8, 512
         r4 = self.res4(r3) # 1/8, 1024
 
-        # calculating feature from cropped target image
-        b, no = target.shape[:2]
-        target = target.view(b*no,
-            target.shape[2],
-            target.shape[3],
-            target.shape[4]
-        )
-        f_tar = (target - self.mean) / self.std
-        x_tar = self.conv1(f_tar) 
-        x_tar = self.bn1(x_tar)
-        c1_tar = self.relu(x_tar)   # 1/2, 64
-        x_tar = self.maxpool(c1_tar)  # 1/4, 64
-        r2_tar = self.res2(x_tar)   # 1/4, 256
-        r3_tar = self.res3(r2_tar) # 1/8, 512
-        r4_tar = self.res4(r3_tar) # 1/8, 1024
-
         # make output tensors with leading dim (b*no,)
         r4e = r4.unsqueeze(1).expand(b, no,-1,-1,-1)
         r3e = r3.unsqueeze(1).expand(b, no,-1,-1,-1)
@@ -58,10 +61,13 @@ class SiamQueryEncoder(STM.Encoder_Q):
         r3e = r3e.contiguous().view(b*no, r3e.shape[2],r3e.shape[3],r3e.shape[4])
         r2e = r2e.contiguous().view(b*no, r2e.shape[2],r2e.shape[3],r2e.shape[4])
 
-        feat = conv2d_dw_group(r4e, r4_tar, pad= True) # same shape as r4e
-        c_feat = torch.cat(
-            (r4e, feat), dim= 1, # along channel dim.
-        ) # C == 2048
+        if self.use_target:
+            feat = conv2d_dw_group(r4e, r4_tar, pad= True) # same shape as r4e
+            c_feat = torch.cat(
+                (r4e, feat), dim= 1, # along channel dim.
+            ) # C == 2048
+        else:
+            c_feat = r4e # C == 1024
 
         return c_feat, r3e, r2e
 
@@ -211,11 +217,30 @@ class EMN(STM.STM):
     """ Enhanced Memory Network： 
     https://youtube-vos.org/assets/challenge/2019/reports/YouTube-VOS-01_Enhanced_Memory_Network_for_Video_Segmentation.pdf
     """
-    def __init__(self, **kwargs):
-        super(EMN, self).__init__()
-        self.Encoder_Q = SiamQueryEncoder()
-        self.KV_Q_r4_ = STM.KeyValue(2048, keydim= 128, valdim=512)
-        self.Decoder_ = Decoder(1024, 256)
+    def __init__(self,
+            use_target= True, # whether use target image in query
+            use_aspp= True, # whether use pyramid pooling im decoder
+            **kwargs
+        ):
+        """ NOTE: different parameters in init will lead to in-compatible EMN modules
+        but with strict=False, we can still load from STM trained model.
+        """
+        super(EMN, self).__init__(**kwargs)
+        if (not use_aspp) and (not use_target):
+            warnings.warn("You set both 'use_assp' and 'use_target' to False, it is better to use STM solution.")
+        self.use_target = use_target
+        self.use_aspp = use_aspp
+
+        self.Encoder_Q = SiamQueryEncoder(use_target= self.use_target)
+        if self.use_target:
+            self.KV_Q_r4_ = STM.KeyValue(2048, keydim= 128, valdim=512)
+        else:
+            self.KV_Q_r4_ = STM.KeyValue(1024, keydim= 128, valdim=512)
+
+        if self.use_aspp:
+            self.Decoder_ = Decoder(1024, 256)
+        else:
+            self.Decoder_ = Decoder(1024, 256, pool_sizes= None)
 
     def segment(self,
             frame,
