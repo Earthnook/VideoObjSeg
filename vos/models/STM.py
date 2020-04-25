@@ -262,17 +262,6 @@ class STM(nn.Module):
         logit = torch.log((em /(1-em)))
         return logit
 
-    def direct_format(self, logits, K, B, num_objects):
-        """ since the model is calculated in (B*no) batch, we format the leading
-        dimension as input data specifies.
-        Return with leading dim (B, K, h, w) as a single frame of mask
-        """
-        _, H, W = logits.shape
-        logi = logits.view(B, -1, H, W)
-        return_ = ToCuda(torch.zeros(B, K, H, W))
-        return_[:, 1:num_objects+1] = logi
-        return return_
-
     def segment(self, frame, keys, values, num_objects): 
         # if num_objects == 0, treat as 1 object
         num_objects = max(num_objects.max().item(), 1)
@@ -303,15 +292,12 @@ class STM(nn.Module):
             k4e,
             v4e
         )
-        logits = self.Decoder(m4, r3e, r2e) # (B*no, 2, h, w)
+        logits = self.Decoder(m4, r3e, r2e)
+        ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
+        #ps = indipendant possibility to belong to each object
         
-        if self.training: # a nn.Module attribute
-            logit = self.direct_format(logits[:,1], K, B, num_objects)
-        else:
-            ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
-            #ps = indipendant possibility to belong to each object
-            # Also move back to 4 dims
-            logit = self.Soft_aggregation(ps, K, B) # B, K, H, W
+        # Also move back to 4 dims
+        logit = self.Soft_aggregation(ps, K, B) # B, K, H, W
 
         if pad[2]+pad[3] > 0:
             logit = logit[:,:,pad[2]:-pad[3],:]
