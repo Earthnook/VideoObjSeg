@@ -213,7 +213,7 @@ class EMN(STM.STM):
     """
     def __init__(self, **kwargs):
         super(EMN, self).__init__()
-        self.Encoder_Q_ = SiamQueryEncoder()
+        self.Encoder_Q = SiamQueryEncoder()
         self.KV_Q_r4_ = STM.KeyValue(2048, keydim= 128, valdim=512)
         self.Decoder_ = Decoder(1024, 256)
 
@@ -238,7 +238,7 @@ class EMN(STM.STM):
         [target], _ = pad_divide_by([target], 16, (target.size()[2], target.size()[3]))
         target = target.view(B, tar_n, tar_c, target.shape[-2], target.shape[-1])
 
-        r4e, r3e, r2e = self.Encoder_Q_(frame, target[:,:num_objects]) # B*no, dim, ...
+        r4e, r3e, r2e = self.Encoder_Q(frame, target[:,:num_objects]) # B*no, dim, ...
         k4e, v4e = self.KV_Q_r4_(r4e)   # B*no, dim, H/16, W/16
 
         # memory select kv: (B*no, C, T, H, W)
