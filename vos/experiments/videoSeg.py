@@ -95,6 +95,10 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
         **config["runner_kwargs"]
     )
 
+    # load well-trained model if needed
+    # import torch
+    # model.load_state_dict(torch.load("/p300/VideoObjSeg_data/weightfiles/STM_weights.pth"), strict= False)
+    
     name = "Exp-{}-{}".format(
         config["solution"],
         ("Main" if config["pretrain_snapshot_filename"] is None else "preMain"),
