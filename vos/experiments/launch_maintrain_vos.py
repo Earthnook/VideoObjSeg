@@ -16,6 +16,7 @@ def main(args):
         gpu_per_run= 4,
     )
     default_config = get_default_config()
+    default_config["runner_kwargs"]["pretrain_optim_epochs"] = 0
 
     # set up variants
     variant_levels = list()
@@ -46,15 +47,14 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [None, 0],
-        ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl", 0],
-        # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl", 0],
-        # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl", 0],
+        # [None],
+        ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl"],
+        # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl"],
+        # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl"],
     ]
     dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
     keys = [
         ("pretrain_snapshot_filename", ),
-        ("runner_kwargs", "pretrain_optim_epochs"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
