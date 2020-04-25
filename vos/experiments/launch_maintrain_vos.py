@@ -12,8 +12,8 @@ def main(args):
     experiment_title = "video_segmentation"
     affinity_code = encode_affinity(
         n_cpu_core= 48,
-        n_gpu= 4,
-        gpu_per_run= 4,
+        n_gpu= 1,
+        gpu_per_run= 1,
     )
     default_config = get_default_config()
     default_config["runner_kwargs"]["pretrain_optim_epochs"] = 0
@@ -36,8 +36,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [1, 1, 1e-4, int(1e10), 0.9],
-        [24, 24, 1e-5, int(1e10), 0.9],
+        [1, 1, 5e-5, int(1e10), 0.9],
+        # [24, 24, 1e-4, int(1e10), 0.9],
         # [20,20,5e-5, int(1e10), 0.9],
     ]
     dir_names = ["train_spec-{}-{}-{}-{}".format(*v[1:]) for v in values]
@@ -51,8 +51,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [None],
-        ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl"],
+        [None],
+        # ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl"],
     ]
