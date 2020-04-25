@@ -104,6 +104,7 @@ class EMNAlgo(VideoObjSegAlgo):
             frames: torch.Tensor,
             masks: torch.Tensor,
             n_objects: torch.Tensor,
+            calc_loss= True,
             Mem_every=None, Mem_number=None,
         ):
         """ go through the data and calculate the loss (torch.Variable)
@@ -165,4 +166,5 @@ class EMNAlgo(VideoObjSegAlgo):
         g = masks[:,1:].to(dtype= torch.float32)
 
         # calculate loss and return
-        return pred, self.loss_fn(p, g, n_objects) # only query frames are used
+        loss = self.loss_fn(p, g, n_objects) if calc_loss else 0 # only query frames are used
+        return pred, loss

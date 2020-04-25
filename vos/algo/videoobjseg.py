@@ -10,8 +10,8 @@ from torch.nn import functional as F
 from collections import namedtuple
 import numpy as np
 
-TrainInfo = namedtuple("TrainInfo", ["loss", "gradNorm", "IoU", "contour_acc"])
-EvalInfo = namedtuple("EvalInfo", ["loss", "IoU", "contour_acc"])
+TrainInfo = namedtuple("TrainInfo", ["loss", "gradNorm"])
+EvalInfo = namedtuple("EvalInfo", ["IoU", "contour_acc"])
 
 class VideoObjSegAlgo(AlgoBase):
     train_info_fields = tuple(f for f in TrainInfo._fields) # copy
@@ -32,6 +32,7 @@ class VideoObjSegAlgo(AlgoBase):
             frames: torch.Tensor,
             masks: torch.Tensor,
             n_objects: int,
+            calc_loss= True,
             **kwargs,
         ):
         """ Different network has their different usage, so step should be different.
@@ -102,32 +103,23 @@ class VideoObjSegAlgo(AlgoBase):
             frames= data["video"],
             masks= data["mask"],
             n_objects= data["n_objects"],
+            calc_loss= True,
             **self.train_step_kwargs,
         )
         loss.backward()
         grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
         self.optim.step()
         preds = preds.cpu().numpy()
-        gtruths = data["mask"].cpu().numpy()
-
-        # _, _, n, H, W = gtruths.shape
-        p = preds[:,1:]
-        g = gtruths[:,1:]
-        performance_status = self.calc_performance(p, g, n_objects= data["n_objects"])
     
         return TrainInfo(
                 loss= loss.detach().cpu().numpy(), 
                 gradNorm= grad_norm,
-                IoU= performance_status["IoU"],
-                contour_acc= performance_status["contour_acc"],
             ), \
             dict(
                 videos= data["video"].cpu().numpy()[:,1:],
                 masks= data["mask"].cpu().numpy()[:,1:],
                 preds= preds[:,1:],
                 n_objects= data["n_objects"],
-                IoU_each_frame= performance_status["IoU_each_frame"],
-                contour_acc_frame= performance_status["contour_acc_frame"],
             )
 
 
@@ -140,10 +132,11 @@ class VideoObjSegAlgo(AlgoBase):
                 "n_objects": max number of objects
         """
         with torch.no_grad():
-            preds, loss = self.step(
+            preds, _ = self.step(
                 frames= data["video"],
                 masks= data["mask"],
                 n_objects= data["n_objects"],
+                calc_loss= False,
                 **self.eval_step_kwargs,
             )
         preds = preds.cpu().numpy()
@@ -155,7 +148,6 @@ class VideoObjSegAlgo(AlgoBase):
         performance_status = self.calc_performance(p, g, n_objects= data["n_objects"])
 
         return EvalInfo(
-                loss= loss.cpu().numpy(),
                 IoU= performance_status["IoU"],
                 contour_acc= performance_status["contour_acc"],
             ), \
