@@ -147,14 +147,14 @@ def eval_davis(model_state_dict):
     print("Output to {} done".format(outputroot), flush= True)
 
     
-# J_thresh, F_thresh = 0.579, 0.621
+J_thresh, F_thresh = 0.579, 0.621
 # J_thresh, F_thresh = 0.692, 0.740
 # J_thresh, F_thresh = 0.5182, 0.5293
-J_thresh, F_thresh = 0.63, 0.66
+# J_thresh, F_thresh = 0.63, 0.66
 J_mean, F_mean = 0, 0
 itr_is, Js, Fs = [], [], []
 last_statedict = None
-while (J_mean < J_thresh or F_mean < F_thresh):
+while True:
     # run to generate val output
     try:
         print("Loading weights", end= "\r")
@@ -176,6 +176,7 @@ while (J_mean < J_thresh or F_mean < F_thresh):
 #     plt.plot(itr_is, Js, "r-")
 #     plt.plot(itr_is, Fs, "b-")
 
-dst = os.path.join(statedict_root, "params-{:.2f}-{:.2f}.pkl".format(J_mean*100, F_mean*100))
-print("Save to: ", dst)
-torch.save(last_statedict, dst)
+    if (J_mean > J_thresh and F_mean > F_thresh):
+        dst = os.path.join(statedict_root, "params-{:.2f}-{:.2f}.pkl".format(J_mean*100, F_mean*100))
+        print("Save to: ", dst)
+        torch.save(last_statedict, dst)

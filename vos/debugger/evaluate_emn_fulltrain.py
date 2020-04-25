@@ -156,6 +156,7 @@ def eval_davis(model_state_dict):
 #######################################################
 
 # J_thresh, F_thresh = 0.579, 0.621
+# J_thresh, F_thresh = 0.692, 0.740
 # J_thresh, F_thresh = 0.5182, 0.5293
 J_thresh, F_thresh = 0.63, 0.66
 J_mean, F_mean = 0, 0
