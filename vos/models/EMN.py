@@ -249,11 +249,14 @@ class EMN(STM.STM):
             v4e
         )
         logits = self.Decoder(m4, r3e, r2e)
-        ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
-        #ps = indipendant possibility to belong to each object
         
-        # Also move back to 4 dims
-        logit = self.Soft_aggregation(ps, K, B) # B, K, H, W
+        if self.training: # a nn.Module attribute
+            logit = self.direct_format(logits[:,1], K, B, num_objects)
+        else:
+            ps = F.softmax(logits, dim=1)[:,1] # B*no, h, w  
+            #ps = indipendant possibility to belong to each object
+            # Also move back to 4 dims
+            logit = self.Soft_aggregation(ps, K, B) # B, K, H, W
 
         if pad[2]+pad[3] > 0:
             logit = logit[:,:,pad[2]:-pad[3],:]
