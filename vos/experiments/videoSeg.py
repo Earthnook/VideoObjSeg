@@ -37,15 +37,18 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     config = load_variant(log_dir)
 
     # build the components for the experiment and run
-    config["coco_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-    coco = COCO(**config["coco_kwargs"])
-    ecssd = ECSSD(**config["ecssd_kwargs"])
-    msra10k = MSRA10K(**config["msra10k_kwargs"])
-    config["sbd_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-    sbd = SBD(**config["sbd_kwargs"])
-    config["voc_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-    voc = VOCSegmentation(**config["voc_kwargs"])
-    pretrain_dataset = ConcatDataset((ecssd, msra10k, voc, sbd, coco))
+    if config["runner_kwargs"]["pretrain_optim_epochs"] > 0:
+        config["coco_kwargs"].update({"max_n_objects": config["max_n_objects"]})
+        coco = COCO(**config["coco_kwargs"])
+        ecssd = ECSSD(**config["ecssd_kwargs"])
+        msra10k = MSRA10K(**config["msra10k_kwargs"])
+        config["sbd_kwargs"].update({"max_n_objects": config["max_n_objects"]})
+        sbd = SBD(**config["sbd_kwargs"])
+        config["voc_kwargs"].update({"max_n_objects": config["max_n_objects"]})
+        voc = VOCSegmentation(**config["voc_kwargs"])
+        pretrain_dataset = ConcatDataset((ecssd, msra10k, voc, sbd, coco))
+    else:
+        pretrain_dataset = SBD(**config["sbd_kwargs"])
 
     config["videosynth_dataset_kwargs"].update({"resolution": config["exp_image_size"]})
     train_dataset = VideoSynthDataset(
