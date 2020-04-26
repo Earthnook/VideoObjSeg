@@ -17,14 +17,16 @@ def main(args):
     )
     default_config = get_default_config()
     default_config["runner_kwargs"]["pretrain_optim_epochs"] = 0
+    default_config["runner_kwargs"]["min_eval_itr"] = 10
+    
 
     # set up variants
     variant_levels = list()
 
     values = [
-        ["EMN", True, True],
-        ["EMN", False, True],
-        ["EMN", True, False],
+        # ["EMN", True, True],
+        # ["EMN", False, True],
+        # ["EMN", True, False],
         ["STM", False, False],
     ]
     dir_names = ["nn{}-atten{}-aspp{}".format(*v) for v in values]
@@ -36,7 +38,33 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1, 1, 5e-5, int(1e10), 0.9],
+        [(480, 846) for _ in range(4)],
+        # [(384, 384) for _ in range(4)],
+    ]
+    dir_names = ["img_res-{}".format(v[0]) for v in values]
+    keys = [
+        ("exp_image_size", ),
+        ("videosynth_dataset_kwargs", "resolution", ),
+        ("frame_skip_dataset_kwargs", "resolution", ),
+        ("random_subset_kwargs", "resolution", ),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        # [True,  (24, 25)],
+        [False, (24, 25)],
+        # [True,  ( 0, 25)],
+        # [False, ( 0, 25)],
+    ]
+    dir_names = ["data_spec-{}-{}".format(*v) for v in values]
+    keys = [
+        ("frame_skip_dataset_kwargs", "update_on_full_view", ),
+        ("frame_skip_dataset_kwargs", "skip_frame_range", ),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        [1, 1, 1e-5, int(1e10), 0.9],
         # [24, 24, 1e-4, int(1e10), 0.9],
         # [20,20,5e-5, int(1e10), 0.9],
     ]
@@ -56,7 +84,7 @@ def main(args):
         # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl"],
     ]
-    dir_names = [("pretrainFalse" if i[0] is None else "pretrainTrue") for i in values]
+    dir_names = [("preFalse" if i[0] is None else "preTrue") for i in values]
     keys = [
         ("pretrain_snapshot_filename", ),
     ]

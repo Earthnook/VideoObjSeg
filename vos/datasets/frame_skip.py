@@ -20,6 +20,7 @@ class FrameSkipDataset(Dataset):
                 # even explode all the cuda memory.
             resolution= (384, 384), # control the output of the image, to make a batch
             resize_method= "crop", # choose between "crop", "resize"
+            update_on_full_view= True, # when update on full view, skip interval will only be increase when all data is viewed once
         ):
         save__init__args(locals(), underscore= True)
         # As curriculum learning, these surve as counters
@@ -29,9 +30,13 @@ class FrameSkipDataset(Dataset):
 
     def _choose_skip_length(self):
         """ Choose a skip length that can be utilized in one data collection
-        """
-        max_length = min((self._skip_frame_range[1] - self._skip_frame_range[0]), \
-            (self._full_dataset_view // self._skip_increase_interval))
+        """ 
+        if self._update_on_full_view:
+            max_length = self._full_dataset_view // self._skip_increase_interval
+        else:
+            max_length = self._num_getitems // self._skip_increase_interval
+        max_length = min((self._skip_frame_range[1] - self._skip_frame_range[0]), max_length) + self._skip_frame_range[0]
+
         self._skip_length = 0 if max_length == 0 else randint(0, max_length)
 
     def clip_video(self, video, idx):
