@@ -17,17 +17,17 @@ def main(args):
     )
     default_config = get_default_config()
     default_config["runner_kwargs"]["pretrain_optim_epochs"] = 0
-    default_config["runner_kwargs"]["min_eval_itr"] = 10
+    default_config["runner_kwargs"]["min_eval_itr"] = 1000
     
 
     # set up variants
     variant_levels = list()
 
     values = [
-        # ["EMN", True, True],
+        ["EMN", True, True],
         # ["EMN", False, True],
         # ["EMN", True, False],
-        ["STM", False, False],
+        # ["STM", False, False],
     ]
     dir_names = ["nn{}-atten{}-aspp{}".format(*v) for v in values]
     keys = [
@@ -51,15 +51,16 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [True,  (24, 25)],
-        [False, (24, 25)],
-        # [True,  ( 0, 25)],
-        # [False, ( 0, 25)],
+        # [True,  (24, 25), "interpolate"],
+        [False, (24, 25), "interpolate"],
+        # [True,  ( 0, 25), "interpolate"],
+        # [False, ( 0, 25), "interpolate"],
     ]
-    dir_names = ["data_spec-{}-{}".format(*v) for v in values]
+    dir_names = ["data_spec-{}-{}-{}".format(*v) for v in values]
     keys = [
         ("frame_skip_dataset_kwargs", "update_on_full_view", ),
         ("frame_skip_dataset_kwargs", "skip_frame_range", ),
+        ("videosynth_dataset_kwargs", "resize_method"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
