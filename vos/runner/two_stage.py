@@ -52,7 +52,7 @@ class TwoStageRunner(VideoMaskRunner):
                     train_info, extra_info = self.algo.train(itr_i, data)
                     self.store_train_info(itr_i, train_info, extra_info)
 
-                    if not eval_dataloader is None and itr_i % self.eval_interval == 0:
+                    if not eval_dataloader is None and itr_i % self.eval_interval == 0 and itr_i > self.min_eval_itr:
                         self.model.eval()
                         for eval_data in tqdm(eval_dataloader):
                             # torch.cuda.empty_cache()

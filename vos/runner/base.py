@@ -23,7 +23,7 @@ class RunnerBase:
             max_optim_epochs= 1e5,
                 # The maximum number of training epochs.
                 # NOTE: each train epoch will go through all data in dataset ONCE.
-            
+            min_eval_itr= int(1e4), # to save time, set the minimum iteration before evaluation.
         ):
         save__init__args(locals())
 
@@ -140,7 +140,7 @@ class RunnerBase:
                 train_info, extra_info = self.algo.train(itr_i, data)
                 self.store_train_info(itr_i, train_info, extra_info)
 
-                if not self.eval_dataloader is None and itr_i % self.eval_interval == 0:
+                if not self.eval_dataloader is None and itr_i % self.eval_interval == 0 and itr_i > self.min_eval_itr:
                     self.model.eval()
                     for eval_data in tqdm(self.eval_dataloader):
                         eval_info, extra_info = self.algo.eval(itr_i, eval_data)
