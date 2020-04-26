@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset
+from torch.nn import functional as F
 
 from numpy.random import randint
 
@@ -19,7 +20,7 @@ class FrameSkipDataset(Dataset):
             max_clips_sample= 2, # Due memory limitation, sample all clips from one video might 
                 # even explode all the cuda memory.
             resolution= (384, 384), # control the output of the image, to make a batch
-            resize_method= "crop", # choose between "crop", "resize"
+            resize_method= "crop", # choose between "crop", "interpolate"
             update_on_full_view= True, # when update on full view, skip interval will only be increase when all data is viewed once
         ):
         save__init__args(locals(), underscore= True)
@@ -56,11 +57,27 @@ class FrameSkipDataset(Dataset):
             idxs = slice(clip_i, clip_i+1)
         else:
             idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1), (self._skip_length+1))
-        return video[idxs] # (t, C, H, W)
+        return_ =  video[idxs] # (t, C, H, W)
+        return return_
 
     def __len__(self):
         return self._max_clips_sample * self._dataset.__len__()
 
+    @staticmethod
+    def interpo(resolution, *videos):
+        """ run nn.functional.interpolate
+        @ Args
+            resolution: a tuple of 2 ints
+            videos: a sequence of tensor with shape (c, H, W)
+        @ Returns
+            return_: a sequence of tensor with shape (c, *resolution)
+        """
+        return_ = []
+        for v in videos:
+            v = v.to(dtype= torch.float32)
+            return_.append(F.interpolate(v, resolution))
+        return return_
+    
     def __getitem__(self, idx):
         video_idx = int(idx // self._max_clips_sample)
         sub_idx = int(idx % self._max_clips_sample)
@@ -70,8 +87,9 @@ class FrameSkipDataset(Dataset):
 
         if self._resize_method == "crop":
             video, mask = random_crop(self._resolution, video, mask)
-        elif self._resize_method == "resize":
-            raise NotImplementedError # put here for later implementation
+        elif self._resize_method == "interpolate":
+            video, mask = self.interpo(self.resolution, video, mask)
+            mask = mask.to(dtype= torch.uint8)
         else:
             raise NotImplementedError
 
