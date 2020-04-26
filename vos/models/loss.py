@@ -25,12 +25,14 @@ class MultiObjectsBCELoss(nn.Module):
     """ In order to deal with the problem when num of objects are different among a
     batch, in VOS setting
     """
-    def __init__(self, include_bg= False, **kwargs):
+    def __init__(self, include_bg= False, smooth_factor= 1e-20, **kwargs):
         """
             include_bg: if True, background will be calculated into loss
+            smooth_factor: in order to prevent 
         """
         super().__init__(**kwargs)
         self.include_bg = include_bg
+        self.smooth_factor = smooth_factor
         self.bce_loss = nn.BCELoss()
 
     def forward(self, preds, gtruths, n_objects):
@@ -53,7 +55,7 @@ class MultiObjectsBCELoss(nn.Module):
             gtruth_batch.append(gtruth.reshape(-1, H, W))
 
         loss = self.bce_loss(
-            torch.cat(pred_batch, dim= 0),
+            torch.cat(pred_batch, dim= 0) + self.smooth_factor,
             torch.cat(gtruth_batch, dim= 0)
         )
         return loss

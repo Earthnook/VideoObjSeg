@@ -106,9 +106,13 @@ class VideoObjSegAlgo(AlgoBase):
             calc_loss= True,
             **self.train_step_kwargs,
         )
-        loss.backward()
-        grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
-        self.optim.step()
+        if torch.isnan(loss).any():
+            loss = torch.tensor(0)
+            print(f"Invalid loss at itr {itr_i}")
+        else:
+            loss.backward()
+            grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.clip_grad_norm)
+            self.optim.step()
         preds = preds.cpu().numpy()
     
         return TrainInfo(
