@@ -144,9 +144,9 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [0., 10., 5., 0., 0.1, 5, "crop"], # paper hyper-param
-        [3., 5., 5., 0., 0.1, 1, "interpolate"], # a seemingly good by myself
-        # [30., 5., 25., 0., 0.15, 5, "crop"], # another possible hyper-param
+        # [0., 10., 5., 0., 0.1, 5, "interpolate"], # paper hyper-param
+        # [3., 5., 5., 0., 0.1, 1, "interpolate"], # a seemingly good by myself
+        [30., 10., 25., 0., 0.1, 5, "interpolate"], # another possible hyper-param
         # [0., 10., 0.05, 0., 0.1, "crop"],
     ]
     dir_names = ["synth{}-{}-{}-{}-{}-{}-{}".format(*v) for v in values]
