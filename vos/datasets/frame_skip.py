@@ -30,7 +30,7 @@ class FrameSkipDataset(Dataset):
         self._choose_skip_length()
 
     def _choose_skip_length(self):
-        """ Choose a skip length that can be utilized in one data collection
+        """ update self._skip_length attribute, Choose a skip length that can be utilized in one data collection
         """ 
         if self._update_on_full_view:
             max_length = self._full_dataset_view // self._skip_increase_interval
@@ -50,7 +50,14 @@ class FrameSkipDataset(Dataset):
             # +--------------------+--------------+
             #                      |    A clip    |
             #                      +--------------+
-        n_clips = T - (self._n_frames-1) * (self._skip_length+1)
+        # some pre-checking work
+        if T < self._n_frames:
+            raise ValueError("Too short video source, please check video, shape: {}".format(video.shape))
+        total_skipped_length = (self._n_frames-1) * (self._skip_length+1) + 1
+        while T < total_skipped_length:
+            self._skip_length -= 1
+            total_skipped_length = (self._n_frames-1) * (self._skip_length+1) + 1
+        n_clips = T - total_skipped_length + 1
 
         clip_i = min(idx, n_clips-1)
         if self._n_frames == 1:
@@ -58,6 +65,7 @@ class FrameSkipDataset(Dataset):
         else:
             idxs = slice(clip_i, clip_i + self._n_frames*(self._skip_length+1), (self._skip_length+1))
         return_ =  video[idxs] # (t, C, H, W)
+        assert return_.shape[0] == self._n_frames, f"Wrong clip shape: {return_.shape}, video shape: {video.shape}, skip_length: {self._skip_length}, n_frames: {self._n_frames}"
         return return_
 
     def __len__(self):
@@ -82,6 +90,8 @@ class FrameSkipDataset(Dataset):
         video_idx = int(idx // self._max_clips_sample)
         sub_idx = int(idx % self._max_clips_sample)
         item = self._dataset.__getitem__(video_idx)
+
+        self._choose_skip_length()
         video = self.clip_video(item["video"], sub_idx)
         mask = self.clip_video(item["mask"], sub_idx)
 
@@ -98,7 +108,6 @@ class FrameSkipDataset(Dataset):
         if self._num_getitems >= self.__len__():
             self._full_dataset_view += 1
             self._num_getitems = 0
-        self._choose_skip_length()
         
         return dict(
             video= video,
