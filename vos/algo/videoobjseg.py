@@ -108,6 +108,7 @@ class VideoObjSegAlgo(AlgoBase):
         )
         if torch.isnan(loss).any():
             loss = torch.tensor(0)
+            grad_norm = np.nan
             print(f"Invalid loss at itr {itr_i}")
         else:
             loss.backward()

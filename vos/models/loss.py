@@ -25,7 +25,7 @@ class MultiObjectsBCELoss(nn.Module):
     """ In order to deal with the problem when num of objects are different among a
     batch, in VOS setting
     """
-    def __init__(self, include_bg= False, smooth_factor= 1e-20, **kwargs):
+    def __init__(self, include_bg= False, smooth_factor= 1e-10, **kwargs):
         """
             include_bg: if True, background will be calculated into loss
             smooth_factor: in order to prevent 
