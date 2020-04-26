@@ -91,7 +91,11 @@ class TwoStageRunner(VideoMaskRunner):
         self.startup()
         
         if not snapshot_filename is None:
-            itr_i = load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+            try:
+                itr_i = load_pretrained_snapshot(snapshot_filename, self.model, self.algo)
+            except Exception as e:
+                logger.log("load_snapshot_failed by \n {}".format(e))
+                itr_i = 0
         else:
             itr_i = 0
         
