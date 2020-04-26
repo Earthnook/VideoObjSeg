@@ -68,9 +68,11 @@ def get_default_config():
         ),
         frame_skip_dataset_kwargs = dict(
             n_frames= 3,
+            skip_frame_range= (0, 25),
             skip_increase_interval= 50,
-            max_clips_sample= 2,
+            max_clips_sample= 20,
             resolution= exp_image_size,
+            update_on_full_view= True,
         ),
         random_subset_kwargs= dict(
             subset_len= 4,
@@ -112,6 +114,7 @@ def get_default_config():
             log_interval= 5, # in terms of the # of calling algo.train()
             max_predata_see= None, # might make the training stop before reaching max_optim_epochs
             max_data_see= None,
+            min_eval_itr= int(1e4),
         )
     )
 
@@ -141,12 +144,12 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [0., 10., 5., 0., 0.1, 5], # paper hyper-param
-        # [3., 5., 5., 0., 0.1, 1], # a seemingly good by myself
-        # [30., 5., 25., 0., 0.15, 5], # another possible hyper-param
-        # [0., 10., 0.05, 0., 0.1],
+        # [0., 10., 5., 0., 0.1, 5, "crop"], # paper hyper-param
+        [3., 5., 5., 0., 0.1, 1, "interpolate"], # a seemingly good by myself
+        # [30., 5., 25., 0., 0.15, 5, "crop"], # another possible hyper-param
+        # [0., 10., 0.05, 0., 0.1, "crop"],
     ]
-    dir_names = ["synth{}-{}-{}-{}-{}-{}".format(*v) for v in values]
+    dir_names = ["synth{}-{}-{}-{}-{}-{}-{}".format(*v) for v in values]
     keys = [
         ("videosynth_dataset_kwargs", "affine_kwargs", "angle_max"),
         ("videosynth_dataset_kwargs", "affine_kwargs", "translate_max"),
@@ -154,6 +157,7 @@ def main(args):
         ("videosynth_dataset_kwargs", "affine_kwargs", "shear_max"),
         ("videosynth_dataset_kwargs", "TPS_kwargs", "scale"),
         ("videosynth_dataset_kwargs", "dilate_scale"),
+        ("videosynth_dataset_kwargs", "resize_method"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 

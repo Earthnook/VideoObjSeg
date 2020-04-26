@@ -17,7 +17,7 @@ class VideoSynthDataset(Dataset):
     def __init__(self, dataset,
             n_frames: int, # video length
             resolution= (384, 384), # output video resolution
-            resize_method= "crop", # choose between "crop", "resize"
+            resize_method= "crop", # choose between "crop", "interpolate"
             affine_kwargs= dict(
                 angle_max= 5.,
                 translate_max= 10., # the percentage to the H, W of the image
@@ -185,6 +185,21 @@ class VideoSynthDataset(Dataset):
         m_videos = torch.stack(m_videos)
         # the returned videos should be batch-wise
         return videos, m_videos
+
+    @staticmethod
+    def interpo(resolution, *videos):
+        """ run nn.functional.interpolate
+        @ Args
+            resolution: a tuple of 2 ints
+            videos: a sequence of tensor with shape (c, H, W)
+        @ Returns
+            return_: a sequence of tensor with shape (c, *resolution)
+        """
+        return_ = []
+        for v in videos:
+            v = torch.unsqueeze(v.to(dtype= torch.float32), 0)
+            return_.append(F.interpolate(v, resolution)[0])
+        return return_
     
     def __len__(self):
         return len(self.dataset)
@@ -196,15 +211,17 @@ class VideoSynthDataset(Dataset):
         mask = img["mask"]
 
         with torch.no_grad():
-            video, m_video = self.synth_videos([image], [mask])
-        video, m_video = video[0], m_video[0]
+            if self.resize_method == "crop":
+                image, mask = random_crop_CHW(self.resolution, image, mask)
+            elif self.resize_method == "interpolate":
+                image, mask = self.interpo(self.resolution, image, mask)
+                mask = mask.to(dtype= torch.uint8)
+            else:
+                raise NotImplementedError
 
-        if self.resize_method == "crop":
-            video, m_video = random_crop_CHW(self.resolution, video, m_video)
-        elif self.resize_method == "resize":
-            raise NotImplementedError # put here for later implementation
-        else:
-            raise NotImplementedError
+            video, m_video = self.synth_videos([image], [mask])
+            video, m_video = video[0], m_video[0]
+
 
         img.pop("image")
         img["video"] = video
