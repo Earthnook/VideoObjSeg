@@ -101,10 +101,12 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
     # load well-trained model if needed
     # import torch
     # model.load_state_dict(torch.load("/p300/VideoObjSeg_data/weightfiles/STM_weights.pth"), strict= False)
+    # name = "Tune-targ{}-aspp{}-snap{}".format(
     
-    name = "Exp-{}-{}".format(
-        config["solution"],
-        ("Main" if config["pretrain_snapshot_filename"] is None else "preMain"),
+    name = "targ{}-aspp{}-snap{}".format(
+        config["model_kwargs"]["use_target"],
+        config["model_kwargs"]["use_aspp"],
+        ("False" if config["pretrain_snapshot_filename"] is None else "True"),
     )
     with logger_context(log_dir, run_ID, name,
             log_params= config,

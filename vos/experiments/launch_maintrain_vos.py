@@ -52,9 +52,9 @@ def main(args):
 
     values = [
         # [True,  (24, 25), "interpolate"],
-        [False, (24, 25), "interpolate"],
+        # [False, (24, 25), "interpolate"],
         # [True,  ( 0, 25), "interpolate"],
-        # [False, ( 0, 25), "interpolate"],
+        [False, ( 0, 25), "interpolate"],
     ]
     dir_names = ["data_spec-{}-{}-{}".format(*v) for v in values]
     keys = [
@@ -66,6 +66,7 @@ def main(args):
 
     values = [
         [1, 1, 1e-5, int(1e10), 0.9],
+        # [4, 4, 1e-4, int(1e10), 0.9],
         # [24, 24, 1e-4, int(1e10), 0.9],
         # [20,20,5e-5, int(1e10), 0.9],
     ]

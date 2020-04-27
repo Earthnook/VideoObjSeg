@@ -107,7 +107,7 @@ class VideoObjSegAlgo(AlgoBase):
             **self.train_step_kwargs,
         )
         if torch.isnan(loss).any():
-            loss = torch.tensor(0)
+            loss = torch.tensor(np.nan)
             grad_norm = np.nan
             print(f"Invalid loss at itr {itr_i}")
         else:

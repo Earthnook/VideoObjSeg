@@ -110,11 +110,11 @@ def get_default_config():
         runner_kwargs= dict(
             pretrain_optim_epochs= int(10),
             max_optim_epochs= int(20000),
-            eval_interval= 20,
-            log_interval= 5, # in terms of the # of calling algo.train()
+            eval_interval= 100,
+            log_interval= 10, # in terms of the # of calling algo.train()
             max_predata_see= None, # might make the training stop before reaching max_optim_epochs
             max_data_see= None,
-            min_eval_itr= int(1e4),
+            min_eval_itr= int(8e3),
         )
     )
 
@@ -144,9 +144,9 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        # [0., 10., 5., 0., 0.1, 5, "interpolate"], # paper hyper-param
+        [0., 10., 5., 0., 0.1, 5, "interpolate"], # paper hyper-param
         # [3., 5., 5., 0., 0.1, 1, "interpolate"], # a seemingly good by myself
-        [30., 10., 25., 0., 0.1, 5, "interpolate"], # another possible hyper-param
+        # [30., 10., 25., 0., 0.1, 0, "interpolate"], # another possible hyper-param
         # [0., 10., 0.05, 0., 0.1, "crop"],
     ]
     dir_names = ["synth{}-{}-{}-{}-{}-{}-{}".format(*v) for v in values]
