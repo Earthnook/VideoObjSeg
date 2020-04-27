@@ -235,12 +235,12 @@ class EMN(STM.STM):
         if self.use_target:
             self.KV_Q_r4_ = STM.KeyValue(2048, keydim= 128, valdim=512)
         else:
-            self.KV_Q_r4_ = STM.KeyValue(1024, keydim= 128, valdim=512)
+            self.KV_Q_r4_ = self.KV_Q_r4 # a trick to enable load pretrained module
 
         if self.use_aspp:
             self.Decoder_ = Decoder(1024, 256)
         else:
-            self.Decoder_ = Decoder(1024, 256, pool_sizes= None)
+            self.Decoder_ = self.Decoder # a trick to enable load pretrained module
 
     def segment(self,
             frame,
