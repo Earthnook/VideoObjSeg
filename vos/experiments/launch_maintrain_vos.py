@@ -85,6 +85,7 @@ def main(args):
         # ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl"],
+        # ["/root/VideoObjSeg/data/weightfiles/EMN_fulltrain_60.54-64.98.pkl"],
     ]
     dir_names = [("preFalse" if i[0] is None else "preTrue") for i in values]
     keys = [
