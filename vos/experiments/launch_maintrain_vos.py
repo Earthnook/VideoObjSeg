@@ -17,7 +17,7 @@ def main(args):
     )
     default_config = get_default_config()
     default_config["runner_kwargs"]["pretrain_optim_epochs"] = 0
-    default_config["runner_kwargs"]["min_eval_itr"] = 1000
+    default_config["runner_kwargs"]["min_eval_itr"] = 4000
     
 
     # set up variants
@@ -52,9 +52,9 @@ def main(args):
 
     values = [
         # [True,  (24, 25), "interpolate"],
-        # [False, (24, 25), "interpolate"],
+        [False, (24, 25), "interpolate"],
         # [True,  ( 0, 25), "interpolate"],
-        [False, ( 0, 25), "interpolate"],
+        # [False, ( 0, 25), "interpolate"],
     ]
     dir_names = ["data_spec-{}-{}-{}".format(*v) for v in values]
     keys = [
@@ -65,7 +65,7 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [1, 1, 1e-5, int(1e10), 0.9],
+        [1, 1, 1e-5, int(1e10), 0.],
         # [4, 4, 1e-4, int(1e10), 0.9],
         # [24, 24, 1e-4, int(1e10), 0.9],
         # [20,20,5e-5, int(1e10), 0.9],
@@ -81,15 +81,25 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [None],
+        # [None],
         # ["/root/VideoObjSeg/data/weightfiles/STM_pretrain_51.82-52.93.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/STM_fulltrain_62.84-66.74.pkl"],
         # ["/root/VideoObjSeg/data/weightfiles/EMN_pretrain_54.50-59.29.pkl"],
-        # ["/root/VideoObjSeg/data/weightfiles/EMN_fulltrain_60.54-64.98.pkl"],
+        ["/root/VideoObjSeg/data/weightfiles/EMN_fulltrain_60.54-64.98.pkl"],
     ]
     dir_names = [("preFalse" if i[0] is None else "preTrue") for i in values]
     keys = [
         ("pretrain_snapshot_filename", ),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
+        # [1, ],
+        [2, ],
+    ]
+    dir_names = ["maxNobj{}".format(*i) for i in values]
+    keys = [
+        ("train_dataset_kwargs", "max_n_objects"),
     ]
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
