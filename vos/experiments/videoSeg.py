@@ -38,15 +38,17 @@ def build_and_train(affinity_code, log_dir, run_ID, **kwargs):
 
     # build the components for the experiment and run
     if config["runner_kwargs"]["pretrain_optim_epochs"] > 0:
+        datasets = list()
         config["coco_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-        coco = COCO(**config["coco_kwargs"])
-        ecssd = ECSSD(**config["ecssd_kwargs"])
-        msra10k = MSRA10K(**config["msra10k_kwargs"])
         config["sbd_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-        sbd = SBD(**config["sbd_kwargs"])
         config["voc_kwargs"].update({"max_n_objects": config["max_n_objects"]})
-        voc = VOCSegmentation(**config["voc_kwargs"])
-        pretrain_dataset = ConcatDataset((ecssd, msra10k, voc, sbd, coco))
+        datasets.append(ECSSD(**config["ecssd_kwargs"]))
+        datasets.append(SBD(**config["sbd_kwargs"]))
+        datasets.append(MSRA10K(**config["msra10k_kwargs"]))
+        datasets.append(VOCSegmentation(**config["voc_kwargs"]))
+        if config["coco_kwargs"]["root"] is not None:
+            datasets.append(COCO(**config["coco_kwargs"]))
+        pretrain_dataset = ConcatDataset(datasets)
     else:
         pretrain_dataset = SBD(**config["sbd_kwargs"])
 

@@ -114,7 +114,7 @@ def get_default_config():
             log_interval= 10, # in terms of the # of calling algo.train()
             max_predata_see= None, # might make the training stop before reaching max_optim_epochs
             max_data_see= None,
-            min_eval_itr= int(8e3),
+            min_eval_itr= int(3e4),
         )
     )
 
@@ -144,8 +144,8 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
-        [0., 10., 5., 0., 0.1, 5, "interpolate"], # paper hyper-param
-        # [3., 5., 5., 0., 0.1, 1, "interpolate"], # a seemingly good by myself
+        # [0., 10., 5., 0., 0.1, 5, "interpolate"], # paper hyper-param
+        [3., 5., 5., 0., 0.1, 1, "interpolate"], # a seemingly good by myself
         # [30., 10., 25., 0., 0.1, 0, "interpolate"], # another possible hyper-param
         # [0., 10., 0.05, 0., 0.1, "crop"],
     ]
@@ -176,14 +176,25 @@ def main(args):
     variant_levels.append(VariantLevel(keys, values, dir_names))
 
     values = [
+        [None, False],
+        # ["/p300/videoObjSeg_dataset/COCO-2017-train/", False]
+    ]
+    dir_names = ["dset-coco{}-shuf{}".format(("F" if v[0] is None else "T"), str(v[1])[0]) for v in values]
+    keys = [
+        ("coco_kwargs", "root"),
+        ("pretrain_dataloader_kwargs", "shuffle"),
+    ]
+    variant_levels.append(VariantLevel(keys, values, dir_names))
+
+    values = [
         # [4,  4,  1e-5, int(1e10), 0.9],
-        # [1,  1,  1e-5, int(1e10), 0.9],
-        [1,  1,  2e-5, int(1e10), 0.9],
+        [1,  1,  1e-5, int(1e10), 0.9],
+        # [1,  1,  2e-5, int(1e10), 0.9],
         # [8,  8,  5e-5, int(1e10), 0.9],
         # [24, 24, 1e-5, int(1e10), 0.9],
         # [20, 20, 5e-5, int(1e10), 0.9],
     ]
-    dir_names = ["trainParam-{}-{}-{}-{}".format(*v[1:]) for v in values]
+    dir_names = ["trainParam-{}-{:.0e}-{:.0e}-{}".format(*v[1:]) for v in values]
     keys = [
         ("pretrain_dataloader_kwargs", "batch_size"),
         ("dataloader_kwargs", "batch_size"),

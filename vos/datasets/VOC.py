@@ -57,10 +57,12 @@ class VOCSegmentation(VOCSegmentationObject):
             year= "2012", # from "2007" to "2012"
             max_n_objects= 4, # decides the channel of masks (in order to make batch)
             sort_masks= True, # if multiple targets (seems unlikely), sort to put biggest at 0th
+            no_zero_object= True, # if True, the dataset will automatically move to next data if current data has no foreground object
         ):
         super().__init__(root, year= year, image_set= mode)
         self.max_n_objects = max_n_objects
         self.sort_masks = sort_masks
+        self.no_zero_object = no_zero_object
 
     @staticmethod
     def make_instance_mask(contour_mask):
@@ -83,6 +85,8 @@ class VOCSegmentation(VOCSegmentationObject):
         targets = targets.astype(np.uint8)[0] # (H, W) with [0,255] encode
         fgs = VOCSegmentation.make_instance_mask(targets)
         n_objects = len(fgs)
+        if n_objects == 0 and self.no_zero_object:
+            return self[(idx+1) % len(self)]
 
         bg = np.ones_like(targets)
         if self.sort_masks:

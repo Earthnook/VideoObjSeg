@@ -34,12 +34,14 @@ class SBD(Dataset):
             ann_mode= "inst", # "inst" or "cls"
             max_n_objects= 12, # Due to make a batch of data, the one-hot mask has to be consistent
             sort_objects= True, # NOTE: if sorted, the masks will be arranged in terms of area, not the exact id
+            no_zero_object= True, # if True, the dataset will automatically move to next data if current data has no foreground object
         ):
         self._root = root
         self._mode = mode
         self._ann_mode = ann_mode
         self._max_n_objects = max_n_objects
         self._sort_objects = sort_objects
+        self._no_zero_object = no_zero_object
 
         with open(path.join(self._root, "dataset", mode+".txt")) as f:
             self.filenames = f.read().splitlines()
@@ -107,6 +109,8 @@ class SBD(Dataset):
             max_n_objects= self._max_n_objects,
             sort= self._sort_objects
         )
+        if n_objects == 0 and self._no_zero_object:
+            return self[(idx+1) % len(self)]
 
         return dict(
             image= torch.from_numpy(image), # pixel in [0, 1] scale
